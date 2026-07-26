@@ -5,19 +5,39 @@ the street — solve the sums, spring the traps, keep them out of the house.
 
 ## Two ways to play
 
+Live at **https://ckofidis-git.github.io/math-alone/**
+
 | File | What it is |
 |---|---|
-| `index.html` | The full game: timers, traps, waves, streak bonuses, one or two players. Needs a real browser. |
+| `index.html` + `style.css` + `game.js` | The full game. |
 | `math-alone-offline.html` | A quiet practice sheet — 48 questions, multiple choice, live score. **No JavaScript at all**, so it works in previewers that block scripts (iPad Files, Mail). |
 
 ## The game
 
-- Pick 1 or 2 players (two players alternate questions, each with their own score).
-- Choose which maths to practise: `+`, `−`, `×`, `÷`, in any combination.
-- Easy / Medium / Hard, with the difficulty stepping up every 3 waves.
-- Timer on for speed bonuses, or relaxed mode with no countdown.
-- Right answer springs a trap and drives a bandit back; wrong answer lets them creep closer. Five steps and they're in.
-- Six waves of ten questions saves the house. Best score is remembered per device.
+**Three modes.** *Six Nights* is the story: six nights of ten questions, each night unlocking
+the next, ending with the Big Bandit boss. *Practice Range* drills one chosen skill with no
+timer and no way to lose. *Twin Duel* is two players alternating, with a tug-of-war bar.
+
+**Nine question types**, following the Year 3 curriculum: adding, taking away, times tables
+(2, 3, 4, 5, 8, 10), sharing, missing numbers, number bonds, comparing, counting in steps,
+and word problems.
+
+**It adapts.** Every answer is recorded per skill, and the game asks more questions on
+whichever skills have the lowest accuracy. The Sticker Book shows those percentages.
+
+**Wrong answers teach.** Instead of just marking it wrong, the game draws the maths: dot
+arrays for multiplication, sharing into groups for division, a number line for adding and
+taking away, a bar model for number bonds.
+
+**Coins, traps and badges.** Correct answers earn coins; coins build new traps in the Trap
+Workshop (12 to collect); 12 badges and 6 ranks track long-term progress. All saved on the device.
+
+## Checking the maths
+
+The generators are exposed for testing when `?selftest` is in the URL or
+`localStorage.mathAlone.selftest` is `'1'`, so every question type can be verified in bulk
+(40,000+ generated questions, cross-checked against both the printed prompt and the
+teaching picture).
 
 ## Making a fresh practice sheet
 

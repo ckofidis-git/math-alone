@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -12,660 +12,264 @@
 <meta name="apple-mobile-web-app-title" content="Math Alone">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-180.png">
-<style>
-  :root{
-    --night:#0b1730;
-    --night2:#132a52;
-    --snow:#eaf3ff;
-    --gold:#ffcf5c;
-    --red:#e8474b;
-    --green:#48d17a;
-    --ink:#0a1024;
-    --card:#ffffff;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation;}
-  html,body{min-height:100%;}
-  body{
-    margin:0;
-    min-height:100vh;
-    font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;
-    color:var(--snow);
-    background:
-      radial-gradient(1200px 600px at 50% -10%, #22406f 0%, transparent 60%),
-      linear-gradient(#0b1730 0%, #142c56 55%, #1d3d70 100%);
-    background-attachment:fixed;
-    overflow-x:hidden;
-    -webkit-user-select:none; user-select:none;
-    -webkit-text-size-adjust:100%;
-  }
-  #snow{position:fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:1;}
-  .flake{position:absolute; top:-5vh; color:#fff; opacity:.8; animation:fall linear infinite;}
-  @keyframes fall{
-    0%{transform:translateY(-10vh) translateX(0) rotate(0deg);}
-    100%{transform:translateY(110vh) translateX(40px) rotate(360deg);}
-  }
-  .screen{position:relative; z-index:2; min-height:100vh; display:none; flex-direction:column; align-items:center;
-          padding:14px; -webkit-overflow-scrolling:touch;}
-  .screen.on{display:flex;}
-  #jserr{display:none; position:fixed; z-index:99; top:0; left:0; right:0; background:#e8474b; color:#fff;
-         font:14px/1.4 monospace; padding:10px; white-space:pre-wrap;}
-
-  /* ---------- START ---------- */
-  h1{
-    font-size:clamp(30px,7vw,60px); margin:6px 0 0; letter-spacing:2px; text-align:center;
-    color:var(--gold);
-    text-shadow:0 0 18px rgba(255,207,92,.5), 3px 3px 0 #7a3b12;
-  }
-  .sub{opacity:.9; text-align:center; margin:2px 0 12px; font-size:clamp(13px,3.4vw,18px);}
-  .panel{
-    width:min(680px,100%); background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.18);
-    border-radius:18px; padding:14px 16px; margin-bottom:12px; backdrop-filter:blur(3px);
-  }
-  .panel h2{margin:0 0 10px; font-size:16px; letter-spacing:1px; text-transform:uppercase; opacity:.85;}
-  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  .chip{
-    flex:1 1 auto; min-width:80px; text-align:center; padding:14px 10px; border-radius:14px; cursor:pointer;
-    background:rgba(255,255,255,.10); border:2px solid transparent; font-size:17px; font-weight:bold;
-    transition:transform .1s, background .15s;
-    font-family:inherit; color:inherit; -webkit-appearance:none; appearance:none; display:block;
-  }
-  .chip:active{transform:scale(.96);}
-  .chip.sel{background:var(--gold); color:var(--ink); border-color:#fff;}
-  input[type=text]{
-    flex:1 1 160px; padding:12px; border-radius:12px; border:2px solid rgba(255,255,255,.25);
-    background:rgba(0,0,0,.25); color:#fff; font-size:18px; font-family:inherit;
-  }
-  .big{
-    display:block; width:min(680px,100%); margin:6px auto 20px; padding:18px; border:none; border-radius:20px;
-    background:linear-gradient(#ff6b6b,#d33a3e); color:#fff; font-size:26px; font-weight:bold; letter-spacing:2px;
-    font-family:inherit; cursor:pointer; box-shadow:0 6px 0 #8e2226; text-transform:uppercase;
-  }
-  .big:active{transform:translateY(4px); box-shadow:0 2px 0 #8e2226;}
-
-  /* ---------- GAME ---------- */
-  .hud{width:min(760px,100%); display:flex; gap:8px; justify-content:space-between; align-items:stretch;}
-  .score{
-    flex:1; background:rgba(0,0,0,.28); border:2px solid rgba(255,255,255,.15); border-radius:14px;
-    padding:6px 10px; text-align:center; min-width:0;
-  }
-  .score.active{border-color:var(--gold); background:rgba(255,207,92,.18); box-shadow:0 0 14px rgba(255,207,92,.35);}
-  .score .nm{font-size:13px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .score .pts{font-size:24px; font-weight:bold; color:var(--gold);}
-
-  .street{
-    width:min(760px,100%); height:150px; margin:10px 0 6px; position:relative;
-    border-radius:16px; overflow:hidden;
-    background:linear-gradient(#0d1f42 0%, #1a3a6d 60%, #dfeaff 60%, #cddcf5 100%);
-    border:2px solid rgba(255,255,255,.15);
-  }
-  .house{position:absolute; right:6px; bottom:2px; font-size:78px; line-height:1; filter:drop-shadow(0 0 16px rgba(255,207,92,.6));}
-  .bandit{position:absolute; bottom:14px; font-size:44px; transition:left .45s ease; line-height:1;}
-  .bandit.hit{animation:tumble .6s ease;}
-  @keyframes tumble{
-    0%{transform:rotate(0) translateY(0);}
-    35%{transform:rotate(-25deg) translateY(-22px);}
-    70%{transform:rotate(200deg) translateY(0);}
-    100%{transform:rotate(360deg) translateY(0);}
-  }
-  .trapfx{position:absolute; font-size:40px; opacity:0; pointer-events:none;}
-  .trapfx.go{animation:drop .7s ease-out;}
-  @keyframes drop{0%{opacity:1; transform:translateY(-90px) rotate(0);} 100%{opacity:0; transform:translateY(10px) rotate(180deg);}}
-  .alarm{position:absolute; inset:0; background:rgba(232,71,75,.35); opacity:0; pointer-events:none;}
-  .alarm.go{animation:flash .5s;}
-  @keyframes flash{0%,100%{opacity:0;} 50%{opacity:1;}}
-
-  .steps{position:absolute; left:0; right:0; bottom:0; height:12px; display:flex;}
-  .steps i{flex:1; border-right:2px dashed rgba(255,255,255,.35);}
-
-  .qcard{
-    width:min(760px,100%); background:var(--card); color:var(--ink); border-radius:20px; padding:10px 14px 14px;
-    text-align:center; box-shadow:0 8px 0 rgba(0,0,0,.3);
-  }
-  .turn{font-size:15px; font-weight:bold; color:#5a6b8c; letter-spacing:1px;}
-  .question{font-size:clamp(38px,10vw,64px); font-weight:bold; margin:2px 0 6px; letter-spacing:2px;}
-  .answer{
-    font-size:clamp(30px,8vw,46px); font-weight:bold; min-height:1.2em; color:#123; letter-spacing:3px;
-    border-bottom:5px dotted #b9c6dd; display:inline-block; min-width:150px; padding:0 10px;
-  }
-  .timerbar{height:12px; border-radius:8px; background:#dde6f5; overflow:hidden; margin:8px 0 0;}
-  .timerbar>div{height:100%; width:100%; background:linear-gradient(90deg,#48d17a,#ffcf5c,#e8474b); transition:width .25s linear;}
-
-  .pad{width:min(760px,100%); display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;}
-  .key{
-    padding:16px 0; font-size:28px; font-weight:bold; border-radius:16px; border:none; cursor:pointer;
-    background:#f2f6ff; color:var(--ink); font-family:inherit; box-shadow:0 5px 0 #9fb1cd;
-  }
-  .key:active{transform:translateY(3px); box-shadow:0 2px 0 #9fb1cd;}
-  .key.go{background:var(--green); color:#053; box-shadow:0 5px 0 #24824a;}
-  .key.del{background:var(--gold); box-shadow:0 5px 0 #a8802a;}
-
-  /* short screens (iPad landscape): keep the whole game on one screen, no scrolling */
-  @media (max-height:840px){
-    .screen{padding:8px 14px;}
-    .street{height:108px; margin:6px 0 4px;}
-    .house{font-size:58px;}
-    .bandit{font-size:34px;}
-    .trapfx{font-size:30px;}
-    .qcard{padding:6px 14px 10px;}
-    .question{font-size:clamp(30px,7vw,46px);}
-    .answer{font-size:clamp(24px,6vw,36px);}
-    .key{padding:11px 0; font-size:24px;}
-    .pad{gap:6px; margin-top:6px;}
-  }
-
-  .toast{
-    position:fixed; left:50%; top:16%; transform:translateX(-50%) scale(.6); z-index:9;
-    padding:14px 26px; border-radius:18px; font-size:clamp(20px,5vw,30px); font-weight:bold;
-    opacity:0; pointer-events:none; text-align:center; max-width:92vw;
-  }
-  .toast.show{animation:pop 1.4s ease;}
-  @keyframes pop{
-    0%{opacity:0; transform:translateX(-50%) scale(.5);}
-    15%{opacity:1; transform:translateX(-50%) scale(1.08);}
-    80%{opacity:1; transform:translateX(-50%) scale(1);}
-    100%{opacity:0; transform:translateX(-50%) scale(1);}
-  }
-  .toast.good{background:var(--green); color:#04331a; box-shadow:0 0 30px rgba(72,209,122,.6);}
-  .toast.bad{background:var(--red); color:#fff; box-shadow:0 0 30px rgba(232,71,75,.6);}
-
-  /* ---------- END ---------- */
-  .result{width:min(680px,100%); background:rgba(255,255,255,.10); border-radius:20px; padding:18px; text-align:center;
-          border:2px solid rgba(255,255,255,.2);}
-  .result .line{font-size:22px; margin:8px 0;}
-  .stars{font-size:38px; letter-spacing:6px;}
-  .tiny{font-size:12px; opacity:.6; text-align:center; margin-top:auto; padding-top:10px;}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="jserr"></div>
 <noscript>
-  <div style="padding:24px;font-size:20px;line-height:1.5;text-align:center">
+  <div class="nojs">
     ⚠️ This game needs JavaScript.<br><br>
-    On an iPad, open this file in <b>Safari</b> (or Chrome) — the preview window in Files,
-    Mail or OneDrive cannot run games.
+    Open <b>math-alone-offline.html</b> instead — it works everywhere, no scripts needed.
   </div>
 </noscript>
 <div id="snow"></div>
 
-<!-- ============ START SCREEN ============ -->
-<section id="s-start" class="screen on">
-  <h1>MATH ALONE</h1>
-  <div class="sub">🏠 The Slush Bandits are coming! Solve the math, spring the traps, keep them out! ❄️</div>
+<!-- ================= HOME ================= -->
+<section id="s-home" class="screen on">
+  <div class="crown">
+    <div class="rankpill"><span class="rankicon" id="rankIcon">🔰</span><span><b id="rankName">Lookout</b><i id="rankNext">3 more to rank up</i></span></div>
+    <button type="button" class="coinpill" id="coinPill"><span>🪙</span><b id="coinCount">0</b></button>
+    <button type="button" class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  </div>
 
-  <div class="panel">
-    <h2>Who is defending the house?</h2>
-    <div class="row" id="players" style="margin-bottom:10px">
-      <button type="button" class="chip sel" data-players="1">👧 1 Player</button>
-      <button type="button" class="chip" data-players="2">👧👧 2 Players (take turns)</button>
-    </div>
-    <div class="row">
-      <input id="n1" type="text" placeholder="Player 1 name" maxlength="12">
-      <input id="n2" type="text" placeholder="Player 2 name" maxlength="12" style="display:none">
+  <h1 class="logo">MATH<span>ALONE</span></h1>
+  <p class="tagline">The Slush Bandits are back tonight. Solve the maths, spring the traps, keep them out.</p>
+
+  <div class="menu">
+    <button type="button" class="mode" data-mode="story">
+      <span class="mi">🌙</span>
+      <span class="mt">Six Nights<i>The story. Six nights, one boss.</i></span>
+      <span class="mprog" id="storyProg">Night 1</span>
+    </button>
+    <button type="button" class="mode" data-mode="practice">
+      <span class="mi">🎯</span>
+      <span class="mt">Practice Range<i>Pick a skill. No timer, no losing.</i></span>
+    </button>
+    <button type="button" class="mode" data-mode="duel">
+      <span class="mi">🤼</span>
+      <span class="mt">Twin Duel<i>Two players, tug-of-war.</i></span>
+    </button>
+    <div class="menurow">
+      <button type="button" class="mode small" data-mode="shop">
+        <span class="mi">🧰</span><span class="mt">Trap Workshop<i><b id="trapOwned">3</b>/12 traps</i></span>
+      </button>
+      <button type="button" class="mode small" data-mode="stickers">
+        <span class="mi">🏅</span><span class="mt">Sticker Book<i><b id="badgeOwned">0</b>/12 badges</i></span>
+      </button>
     </div>
   </div>
 
-  <div class="panel">
-    <h2>Math to practise (tap one or more)</h2>
-    <div class="row" id="ops">
-      <button type="button" class="chip sel" data-op="+">➕ Plus</button>
-      <button type="button" class="chip sel" data-op="-">➖ Minus</button>
-      <button type="button" class="chip" data-op="×">✖️ Times</button>
-      <button type="button" class="chip" data-op="÷">➗ Divide</button>
-    </div>
+  <div class="namebar">
+    <label>Player 1 <input type="text" id="n1" maxlength="12" placeholder="Player 1"></label>
+    <label>Player 2 <input type="text" id="n2" maxlength="12" placeholder="Player 2"></label>
   </div>
-
-  <div class="panel">
-    <h2>How tricky?</h2>
-    <div class="row" id="diff">
-      <button type="button" class="chip sel" data-diff="1">🐣 Easy</button>
-      <button type="button" class="chip" data-diff="2">🦊 Medium</button>
-      <button type="button" class="chip" data-diff="3">🐉 Hard</button>
-    </div>
-    <div class="row" id="timer" style="margin-top:10px">
-      <button type="button" class="chip sel" data-timer="1">⏱️ Timer on</button>
-      <button type="button" class="chip" data-timer="0">🧘 No timer (relaxed)</button>
-    </div>
-  </div>
-
-  <button class="big" id="startBtn">Start the Watch!</button>
-  <div class="tiny">Best score so far: <span id="bestStart">0</span></div>
-  <div class="tiny"><a href="math-alone-offline.html" style="color:var(--gold)">Quiet practice sheet →</a> (no timer, no rush)</div>
+  <p class="daily" id="dailyLine"></p>
+  <p class="tiny"><a href="math-alone-offline.html">Quiet practice sheet →</a> (paper-style, no timer)</p>
 </section>
 
-<!-- ============ GAME SCREEN ============ -->
+<!-- ================= SETUP (story / practice) ================= -->
+<section id="s-setup" class="screen">
+  <h2 class="stitle" id="setupTitle">Choose your night</h2>
+  <div class="panel" id="nightPanel">
+    <h3>Which night?</h3>
+    <div class="nights" id="nightList"></div>
+  </div>
+  <div class="panel" id="skillPanel">
+    <h3>What shall we practise?</h3>
+    <div class="chips" id="skillList"></div>
+  </div>
+  <div class="panel">
+    <h3>How tricky?</h3>
+    <div class="chips" id="diffList">
+      <button type="button" class="chip sel" data-diff="1">🐣 Gentle</button>
+      <button type="button" class="chip" data-diff="2">🦊 Just right</button>
+      <button type="button" class="chip" data-diff="3">🐉 Tough</button>
+    </div>
+    <div class="chips" id="timerList">
+      <button type="button" class="chip sel" data-timer="1">⏱️ Timer on</button>
+      <button type="button" class="chip" data-timer="0">🧘 No timer</button>
+    </div>
+  </div>
+  <button type="button" class="big" id="goBtn">Start the Watch!</button>
+  <button type="button" class="back" data-back>← Back</button>
+</section>
+
+<!-- ================= GAME ================= -->
 <section id="s-game" class="screen">
   <div class="hud" id="hud"></div>
 
-  <div class="street" id="street">
+  <div class="stage">
+    <svg id="scene" viewBox="0 0 800 250" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a1430"/><stop offset="60%" stop-color="#1b3566"/><stop offset="100%" stop-color="#38598f"/>
+        </linearGradient>
+        <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f2f7ff"/><stop offset="100%" stop-color="#c3d4ef"/>
+        </linearGradient>
+        <radialGradient id="lamp"><stop offset="0%" stop-color="#ffdf9a" stop-opacity=".55"/><stop offset="100%" stop-color="#ffdf9a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="moonGlow"><stop offset="0%" stop-color="#fff8e0" stop-opacity=".5"/><stop offset="100%" stop-color="#fff8e0" stop-opacity="0"/></radialGradient>
+        <linearGradient id="win" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffe9a8"/><stop offset="100%" stop-color="#ffb347"/>
+        </linearGradient>
+      </defs>
+
+      <rect width="800" height="250" fill="url(#sky)"/>
+      <circle cx="120" cy="52" r="60" fill="url(#moonGlow)"/>
+      <circle cx="120" cy="52" r="26" fill="#fff8e0"/>
+      <circle cx="130" cy="45" r="6" fill="#efe6c8" opacity=".7"/>
+      <circle cx="112" cy="62" r="4" fill="#efe6c8" opacity=".6"/>
+      <g id="stars"></g>
+
+      <!-- distant street -->
+      <g opacity=".55" fill="#0d1c3d">
+        <path d="M0 168 h60 v-46 h34 v46 h30 v-62 h40 v62 h44 v-38 h30 v38 h50 v-54 h36 v54 h60 v-30 h28 v30 h90 v-44 h34 v44 h264 v40 H0 Z"/>
+      </g>
+      <g fill="#ffd98a" opacity=".5">
+        <rect x="20" y="140" width="7" height="9"/><rect x="70" y="132" width="7" height="9"/>
+        <rect x="150" y="120" width="7" height="9"/><rect x="255" y="142" width="7" height="9"/>
+        <rect x="330" y="128" width="7" height="9"/><rect x="470" y="146" width="7" height="9"/>
+      </g>
+
+      <!-- snow ground -->
+      <path d="M0 186 q120 -16 240 -4 t250 2 t310 -8 V250 H0 Z" fill="url(#ground)"/>
+      <path d="M0 208 q160 -10 300 2 t500 -6 V250 H0 Z" fill="#ffffff" opacity=".55"/>
+
+      <!-- fence -->
+      <g id="fence" stroke="#8fa6c9" stroke-width="4" opacity=".65"></g>
+
+      <!-- lamp post -->
+      <circle cx="300" cy="150" r="62" fill="url(#lamp)"/>
+      <rect x="296" y="150" width="7" height="58" fill="#33456e"/>
+      <path d="M285 150 h30 l-6 -16 h-18 Z" fill="#4a5f8f"/>
+      <circle cx="300" cy="142" r="6" fill="#ffe9a8"/>
+
+      <!-- THE HOUSE -->
+      <g id="house">
+        <rect x="612" y="126" width="150" height="86" rx="4" fill="#22375f"/>
+        <path d="M600 130 L687 74 L774 130 Z" fill="#33507f"/>
+        <path d="M600 130 L687 74 L774 130 Z" fill="none" stroke="#e9f1ff" stroke-width="5" stroke-linejoin="round" opacity=".85"/>
+        <rect x="736" y="86" width="17" height="30" fill="#2b4370"/>
+        <g id="smoke" fill="#e9f1ff" opacity=".5">
+          <circle class="pf pf1" cx="744" cy="80" r="5"/>
+          <circle class="pf pf2" cx="744" cy="80" r="6"/>
+          <circle class="pf pf3" cx="744" cy="80" r="7"/>
+        </g>
+        <!-- glowing windows -->
+        <rect x="630" y="146" width="36" height="30" rx="3" fill="url(#win)"/>
+        <rect x="708" y="146" width="36" height="30" rx="3" fill="url(#win)"/>
+        <g stroke="#22375f" stroke-width="3">
+          <path d="M648 146 v30 M630 161 h36 M726 146 v30 M708 161 h36"/>
+        </g>
+        <!-- the kid, watching from the window -->
+        <g id="kid">
+          <circle cx="726" cy="166" r="8" fill="#ffd9b8"/>
+          <path d="M718 163 a8 8 0 0 1 16 0 z" fill="#e8474b"/>
+          <circle cx="723" cy="166" r="1.6" fill="#25304a"/><circle cx="729" cy="166" r="1.6" fill="#25304a"/>
+        </g>
+        <!-- door + wreath -->
+        <rect x="676" y="168" width="34" height="44" rx="3" fill="#8b5a2b"/>
+        <circle cx="704" cy="192" r="2.5" fill="#ffcf5c"/>
+        <circle cx="693" cy="180" r="8" fill="none" stroke="#2f8f4f" stroke-width="4"/>
+        <circle cx="693" cy="188" r="2.5" fill="#e8474b"/>
+        <!-- string lights -->
+        <g id="lights"></g>
+      </g>
+
+      <!-- bandits -->
+      <g id="banditGroup">
+        <g id="banditA"><g class="walker">
+          <g class="legs">
+            <rect class="lgL" x="-9" y="-14" width="7" height="15" rx="3" fill="#2c3a5c"/>
+            <rect class="lgR" x="3" y="-14" width="7" height="15" rx="3" fill="#2c3a5c"/>
+          </g>
+          <rect x="-13" y="-40" width="26" height="28" rx="9" fill="#7b3f2e"/>
+          <circle cx="0" cy="-46" r="11" fill="#ffd9b8"/>
+          <path d="M-12 -49 a12 12 0 0 1 24 0 z" fill="#e8474b"/>
+          <rect x="-13" y="-51" width="26" height="4" rx="2" fill="#c23c40"/>
+          <circle cx="-4" cy="-46" r="1.8" fill="#25304a"/><circle cx="4" cy="-46" r="1.8" fill="#25304a"/>
+          <path d="M-5 -40 q5 4 10 0" stroke="#8a5a3b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="0" cy="-42" rx="3" ry="2.4" fill="#e59a7a"/>
+        </g></g>
+        <g id="banditB"><g class="walker">
+          <g class="legs">
+            <rect class="lgL" x="-8" y="-16" width="6" height="17" rx="3" fill="#243352"/>
+            <rect class="lgR" x="3" y="-16" width="6" height="17" rx="3" fill="#243352"/>
+          </g>
+          <rect x="-11" y="-44" width="22" height="30" rx="8" fill="#2f6b46"/>
+          <circle cx="0" cy="-51" r="10" fill="#ffd9b8"/>
+          <rect x="-11" y="-60" width="22" height="10" rx="4" fill="#3f6fb5"/>
+          <circle cx="-4" cy="-51" r="1.7" fill="#25304a"/><circle cx="4" cy="-51" r="1.7" fill="#25304a"/>
+          <path d="M-4 -45 q4 3 8 0" stroke="#b06a4a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g></g>
+      </g>
+
+      <g id="trapLayer"></g>
+      <g id="popLayer"></g>
+    </svg>
     <div class="alarm" id="alarm"></div>
-    <div class="house">🏠</div>
-    <div class="steps"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="bandit" id="bandit">🦹</div>
-    <div class="trapfx" id="trapfx">🎨</div>
+    <div class="stagebar"><span id="statusLine">Night 1 · Question 1 of 10</span><span id="heartRow"></span></div>
   </div>
-  <div class="sub" id="statusLine" style="margin:0 0 6px">Wave 1 · Question 1 of 10</div>
 
   <div class="qcard">
-    <div class="turn" id="turnLine">SARAH'S TURN</div>
-    <div class="question" id="question">7 × 6 = ?</div>
+    <div class="turn" id="turnLine">YOUR TURN</div>
+    <div class="qwrap"><div class="question" id="question">7 × 6 = ?</div></div>
     <div class="answer" id="answer">&nbsp;</div>
     <div class="timerbar"><div id="tbar"></div></div>
   </div>
 
-  <div class="pad" id="pad">
-    <button class="key">1</button><button class="key">2</button><button class="key">3</button>
-    <button class="key">4</button><button class="key">5</button><button class="key">6</button>
-    <button class="key">7</button><button class="key">8</button><button class="key">9</button>
-    <button class="key del" data-act="del">⌫</button>
-    <button class="key">0</button>
-    <button class="key go" data-act="ok">✔</button>
+  <div id="inputArea">
+    <div class="pad" id="pad">
+      <button type="button" class="key">1</button><button type="button" class="key">2</button><button type="button" class="key">3</button>
+      <button type="button" class="key">4</button><button type="button" class="key">5</button><button type="button" class="key">6</button>
+      <button type="button" class="key">7</button><button type="button" class="key">8</button><button type="button" class="key">9</button>
+      <button type="button" class="key del" data-act="del">⌫</button>
+      <button type="button" class="key">0</button>
+      <button type="button" class="key go" data-act="ok">✔</button>
+    </div>
+    <div class="choicepad" id="choicePad"></div>
   </div>
+  <button type="button" class="back" data-back>← Give up</button>
 </section>
 
-<!-- ============ END SCREEN ============ -->
+<!-- ================= TEACH OVERLAY ================= -->
+<div id="teach" class="overlay">
+  <div class="teachbox">
+    <div class="teachhead">Let's look at that one</div>
+    <div class="teachq" id="teachQ"></div>
+    <svg id="teachArt" viewBox="0 0 320 130" aria-hidden="true"></svg>
+    <div class="teachtip" id="teachTip"></div>
+    <button type="button" class="big small" id="teachBtn">Got it!</button>
+  </div>
+</div>
+
+<!-- ================= RESULTS ================= -->
 <section id="s-end" class="screen">
-  <h1 id="endTitle">HOUSE SAVED!</h1>
+  <h2 class="stitle" id="endTitle">House saved!</h2>
   <div class="result" id="endBody"></div>
-  <button class="big" id="againBtn" style="margin-top:16px">Play Again</button>
+  <div class="rewards" id="rewardBox"></div>
+  <button type="button" class="big" id="againBtn">Play again</button>
+  <button type="button" class="back" data-back>← Home</button>
+</section>
+
+<!-- ================= TRAP WORKSHOP ================= -->
+<section id="s-shop" class="screen">
+  <h2 class="stitle">🧰 Trap Workshop</h2>
+  <p class="tagline">Earn coins by answering correctly. Every trap you build joins your defence.</p>
+  <div class="grid" id="shopGrid"></div>
+  <button type="button" class="back" data-back>← Home</button>
+</section>
+
+<!-- ================= STICKER BOOK ================= -->
+<section id="s-stickers" class="screen">
+  <h2 class="stitle">🏅 Sticker Book</h2>
+  <p class="tagline">Badges you have earned defending the house.</p>
+  <div class="grid" id="badgeGrid"></div>
+  <div class="statbox" id="statBox"></div>
+  <button type="button" class="back" data-back>← Home</button>
 </section>
 
 <div class="toast" id="toast"></div>
-
-<script>
-window.onerror = function(msg, src, line){
-  var box = document.getElementById('jserr');
-  if(box){ box.style.display='block'; box.textContent = 'Oops, the game hit an error:\n'+msg+'\n(line '+line+')'; }
-};
-(function(){
-"use strict";
-
-/* ---------------- snow ---------------- */
-(function makeSnow(){
-  const box = document.getElementById('snow');
-  const glyphs = ['❄','❅','•','❆'];
-  for(let i=0;i<45;i++){
-    const f = document.createElement('div');
-    f.className='flake';
-    f.textContent = glyphs[i%glyphs.length];
-    f.style.left = Math.random()*100+'vw';
-    f.style.fontSize = (8+Math.random()*16)+'px';
-    f.style.animationDuration = (6+Math.random()*10)+'s';
-    f.style.animationDelay = (-Math.random()*12)+'s';
-    f.style.opacity = (0.3+Math.random()*0.6);
-    box.appendChild(f);
-  }
-})();
-
-/* ---------------- sound ---------------- */
-let actx = null;
-function unlockAudio(){          // iOS only allows sound after a real tap
-  try{
-    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state === 'suspended') actx.resume();
-  }catch(e){}
-}
-function beep(freq, dur, type, vol, when){
-  try{
-    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
-    const t = actx.currentTime + (when||0);
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol||0.14, t+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-    o.connect(g).connect(actx.destination);
-    o.start(t); o.stop(t+dur+0.05);
-  }catch(e){}
-}
-const sfx = {
-  good(){ beep(660,.12,'triangle',.15,0); beep(880,.16,'triangle',.15,.1); beep(1180,.22,'triangle',.13,.2); },
-  bad(){ beep(180,.28,'sawtooth',.12,0); beep(120,.32,'sawtooth',.10,.12); },
-  trap(){ beep(320,.10,'square',.10,0); beep(200,.16,'square',.10,.08); },
-  level(){ [523,659,784,1046].forEach((f,i)=>beep(f,.2,'triangle',.14,i*0.11)); },
-  over(){ [440,392,349,262].forEach((f,i)=>beep(f,.35,'sawtooth',.12,i*0.2)); }
-};
-
-/* ---------------- content ---------------- */
-const TRAPS = [
-  ['🎨','Paint can on a rope — BONK!'],
-  ['🧊','Icy front steps — WHOOPS!'],
-  ['🪶','Feather blizzard — ACHOO!'],
-  ['🚗','Toy cars on the floor — SLIP!'],
-  ['🕷️','Rubber spider drop — AAAH!'],
-  ['🔔','Alarm bells everywhere — CLANG!'],
-  ['🍯','Sticky honey floor — STUCK!'],
-  ['🎈','Balloon avalanche — POP POP!'],
-  ['🧦','Slippery socks on the stairs — WHEE!'],
-  ['🥁','Drum kit tumble — BOOM!'],
-  ['🧴','Soap slide in the hallway — ZOOM!'],
-  ['🪣','Bucket on the head — CLONK!']
-];
-const TAUNTS = [
-  'Heh heh… nobody home!',
-  'This one is TOO easy…',
-  'Get the crowbar, Lanky!',
-  'Almost at the door…',
-  'That kid is no match for us!'
-];
-const CHEERS = ['NICE ONE!','BOOM!','GOT \'EM!','SUPER!','TRAP TIME!','BULLSEYE!','WOW!'];
-
-/* ---------------- state ---------------- */
-const S = {
-  players: [],            // {name, score, right, wrong, streak, best}
-  turn: 0,
-  ops: ['+','-'],
-  diff: 1,
-  useTimer: true,
-  wave: 1,
-  qInWave: 0,
-  qPerWave: 10,
-  threat: 0,              // 0 = far away, 5 = at the door
-  maxThreat: 5,
-  answer: '',
-  current: null,
-  timeLeft: 0,
-  timeMax: 30,
-  tick: null,
-  locked: false
-};
-
-const $ = id => document.getElementById(id);
-const rnd = n => Math.floor(Math.random()*n);
-const pick = a => a[rnd(a.length)];
-
-/* ---------------- question maker ---------------- */
-function makeQuestion(){
-  const op = pick(S.ops);
-  const lvl = Math.min(3, S.diff + Math.floor((S.wave-1)/3));   // gets tougher every 3 waves
-  let a,b,text,ans;
-
-  if(op==='+'){
-    if(lvl===1){ a=2+rnd(18); b=2+rnd(18); }
-    else if(lvl===2){ a=10+rnd(80); b=10+rnd(80); }
-    else { a=100+rnd(400); b=50+rnd(350); }
-    ans = a+b; text = a+' + '+b;
-  }
-  else if(op==='-'){
-    if(lvl===1){ a=5+rnd(15); b=1+rnd(a-1); }
-    else if(lvl===2){ a=20+rnd(80); b=5+rnd(a-5); }
-    else { a=120+rnd(400); b=30+rnd(a-30); }
-    ans = a-b; text = a+' − '+b;
-  }
-  else if(op==='×'){
-    if(lvl===1){ a=pick([2,3,4,5,10]); b=1+rnd(10); }
-    else if(lvl===2){ a=2+rnd(8); b=2+rnd(9); }
-    else { a=2+rnd(11); b=2+rnd(11); }
-    ans = a*b; text = a+' × '+b;
-  }
-  else { // ÷
-    if(lvl===1){ b=pick([2,3,4,5,10]); ans=1+rnd(10); }
-    else if(lvl===2){ b=2+rnd(8); ans=2+rnd(9); }
-    else { b=2+rnd(11); ans=2+rnd(11); }
-    a = b*ans; text = a+' ÷ '+b;
-  }
-  return {text: text+' = ?', ans: ans};
-}
-
-/* ---------------- screens ---------------- */
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-  $(id).classList.add('on');
-}
-
-/* ---------------- start screen wiring ---------------- */
-/* iPad/iOS note: listeners go on each button itself (not the container) and we also
-   accept a touch, so a tap always registers even if the click event is swallowed. */
-function onTap(el, fn){
-  let touched = false, x0 = 0, y0 = 0, moved = false;
-  el.addEventListener('touchstart', e=>{
-    const t = e.changedTouches[0]; x0 = t.clientX; y0 = t.clientY; moved = false;
-  }, {passive:true});
-  el.addEventListener('touchmove', e=>{
-    const t = e.changedTouches[0];
-    if(Math.abs(t.clientX-x0) > 14 || Math.abs(t.clientY-y0) > 14) moved = true;   // finger is scrolling
-  }, {passive:true});
-  el.addEventListener('touchend', e=>{
-    touched = true;
-    if(moved) return;                 // a scroll, not a tap
-    e.preventDefault();
-    fn();
-  }, {passive:false});
-  el.addEventListener('click', ()=>{ if(touched){ touched = false; return; } fn(); });
-}
-
-function group(containerId, multi){
-  const box = $(containerId);
-  box.querySelectorAll('.chip').forEach(c=>{
-    onTap(c, ()=>{
-      if(multi){
-        c.classList.toggle('sel');
-        if(!box.querySelector('.chip.sel')) c.classList.add('sel');   // keep at least one
-      } else {
-        box.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
-        c.classList.add('sel');
-      }
-      unlockAudio(); beep(700,.06,'square',.07,0);
-    });
-  });
-}
-group('ops', true);
-group('diff', false);
-group('timer', false);
-
-let playerCount = 1;
-$('players').querySelectorAll('.chip').forEach(chip=>{
-  onTap(chip, ()=>{
-    $('players').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
-    chip.classList.add('sel');
-    playerCount = +chip.getAttribute('data-players');
-    $('n2').style.display = playerCount===2 ? '' : 'none';
-    unlockAudio(); beep(700,.06,'square',.07,0);
-  });
-});
-
-$('bestStart').textContent = localStorage.getItem('mathAlone.best') || 0;
-
-onTap($('startBtn'), ()=>{ unlockAudio(); startGame(); });
-onTap($('againBtn'), ()=>{ show('s-start'); window.scrollTo(0,0); });
-
-/* ---------------- game flow ---------------- */
-function startGame(){
-  S.ops  = [...document.querySelectorAll('#ops .chip.sel')].map(c=>c.dataset.op);
-  S.diff = +document.querySelector('#diff .chip.sel').dataset.diff;
-  S.useTimer = document.querySelector('#timer .chip.sel').dataset.timer === '1';
-  S.timeMax = S.diff===1 ? 30 : 25;
-
-  const names = [ ($('n1').value.trim() || 'Player 1') ];
-  if(playerCount===2) names.push( $('n2').value.trim() || 'Player 2' );
-  S.players = names.map(n=>({name:n, score:0, right:0, wrong:0, streak:0, best:0}));
-
-  S.turn = 0; S.wave = 1; S.qInWave = 0; S.threat = 0; S.locked = false;
-  buildHud();
-  show('s-game');
-  nextQuestion();
-}
-
-function buildHud(){
-  $('hud').innerHTML = S.players.map((p,i)=>
-    `<div class="score" id="sc${i}"><div class="nm">${escapeHtml(p.name)}</div><div class="pts" id="pts${i}">0</div></div>`
-  ).join('');
-}
-function escapeHtml(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-
-function paintHud(){
-  S.players.forEach((p,i)=>{
-    $('pts'+i).textContent = p.score;
-    $('sc'+i).classList.toggle('active', i===S.turn);
-  });
-  $('turnLine').textContent = (S.players.length>1 ? S.players[S.turn].name.toUpperCase()+"'S TURN" : 'YOUR TURN');
-  $('statusLine').textContent = `Wave ${S.wave} · Question ${S.qInWave+1} of ${S.qPerWave} · ${'❤️'.repeat(S.maxThreat-S.threat)}`;
-  const b = $('bandit');
-  b.style.left = (4 + S.threat*13.5) + '%';
-  b.textContent = S.threat>=4 ? '🦹‍♂️' : '🦹';
-}
-
-function nextQuestion(){
-  S.answer=''; $('answer').innerHTML='&nbsp;';
-  S.current = makeQuestion();
-  $('question').textContent = S.current.text;
-  paintHud();
-  S.locked = false;
-
-  clearInterval(S.tick);
-  if(S.useTimer){
-    S.timeLeft = S.timeMax;
-    $('tbar').style.width = '100%';
-    S.tick = setInterval(()=>{
-      S.timeLeft -= 0.25;
-      $('tbar').style.width = Math.max(0, S.timeLeft/S.timeMax*100)+'%';
-      if(S.timeLeft<=0){ clearInterval(S.tick); judge(null); }
-    },250);
-  } else {
-    $('tbar').style.width = '100%';
-  }
-}
-
-function typeDigit(d){
-  if(S.locked) return;
-  if(S.answer.length>=5) return;
-  S.answer += d;
-  $('answer').textContent = S.answer;
-  beep(520,.05,'square',.06,0);
-}
-function backspace(){
-  if(S.locked) return;
-  S.answer = S.answer.slice(0,-1);
-  $('answer').innerHTML = S.answer || '&nbsp;';
-  beep(300,.05,'square',.06,0);
-}
-function submit(){
-  if(S.locked || S.answer==='') return;
-  judge(parseInt(S.answer,10));
-}
-
-function judge(given){
-  S.locked = true;
-  clearInterval(S.tick);
-  const p = S.players[S.turn];
-  const correct = (given !== null && given === S.current.ans);
-
-  if(correct){
-    const timeBonus = S.useTimer ? Math.max(0, Math.round(S.timeLeft)) : 5;
-    p.streak++;
-    const pts = 10 + timeBonus + (p.streak-1)*3;
-    p.score += pts; p.right++;
-    if(S.threat>0) S.threat--;
-    springTrap(pts);
-    sfx.good();
-  } else {
-    p.streak = 0; p.wrong++;
-    S.threat++;
-    const msg = given===null ? '⏰ TOO SLOW!' : '❌ Oops!';
-    toast(msg+'<br><span style="font-size:.7em">'+S.current.text.replace('?', S.current.ans)+'</span>', 'bad');
-    $('alarm').classList.remove('go'); void $('alarm').offsetWidth; $('alarm').classList.add('go');
-    sfx.bad();
-  }
-  paintHud();               // move the bandit right away so the kids see the effect
-
-  setTimeout(()=>{
-    if(S.threat >= S.maxThreat){ endGame(false); return; }
-    S.qInWave++;
-    if(S.players.length>1) S.turn = (S.turn+1) % S.players.length;
-    if(S.qInWave >= S.qPerWave){ waveComplete(); return; }
-    nextQuestion();
-  }, correct ? 1150 : 1750);
-}
-
-function springTrap(pts){
-  const [icon,line] = pick(TRAPS);
-  const fx = $('trapfx');
-  fx.textContent = icon;
-  fx.style.left = (4 + S.threat*13.5 + 1) + '%';
-  fx.style.bottom = '40px';
-  fx.classList.remove('go'); void fx.offsetWidth; fx.classList.add('go');
-  const b = $('bandit');
-  b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
-  sfx.trap();
-  toast(pick(CHEERS)+'<br><span style="font-size:.62em">'+icon+' '+line+'  +'+pts+'</span>','good');
-}
-
-function waveComplete(){
-  sfx.level();
-  S.wave++; S.qInWave = 0;
-  if(S.threat>0) S.threat--;                       // reward: push the bandits back
-  toast('🎉 WAVE '+(S.wave-1)+' CLEARED! 🎉<br><span style="font-size:.6em">'+pick(TAUNTS)+'</span>','good');
-  paintHud();
-  setTimeout(()=>{
-    if(S.wave>6){ endGame(true); } else { nextQuestion(); }
-  }, 1800);
-}
-
-function endGame(won){
-  clearInterval(S.tick);
-  const total = S.players.reduce((s,p)=>s+p.score,0);
-  const best = +(localStorage.getItem('mathAlone.best')||0);
-  if(total>best) localStorage.setItem('mathAlone.best', total);
-
-  $('endTitle').textContent = won ? 'HOUSE SAVED! 🏆' : 'THEY GOT IN! 🚨';
-  $('endTitle').style.color = won ? '#ffcf5c' : '#ff8a8d';
-
-  let html = '<div style="font-size:56px">'+(won?'🏠✨':'🦹💨')+'</div>';
-  html += '<div class="line">'+(won
-      ? 'The Slush Bandits ran off into the snow. Brilliant defending!'
-      : 'The bandits slipped past this time — try again and trap them sooner!')+'</div>';
-
-  S.players.forEach(p=>{
-    const asked = p.right + p.wrong;
-    const pct = asked ? Math.round(p.right/asked*100) : 0;
-    const stars = pct>=90?5 : pct>=75?4 : pct>=60?3 : pct>=40?2 : 1;
-    html += `<div class="line" style="margin-top:14px">
-      <b>${escapeHtml(p.name)}</b><br>
-      ${p.score} points · ${p.right}/${asked} correct (${pct}%)<br>
-      <span class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(5-stars)}</span></div>`;
-  });
-
-  if(S.players.length>1){
-    const [a,b] = S.players;
-    html += '<div class="line" style="margin-top:14px">'+
-      (a.score===b.score ? '🤝 A perfect tie — great teamwork!'
-        : '👑 Best defender this round: <b>'+escapeHtml(a.score>b.score?a.name:b.name)+'</b>')+'</div>';
-  }
-  html += '<div class="line" style="opacity:.7;font-size:16px">Team total: '+total+' · Best ever: '+Math.max(total,best)+'</div>';
-  $('endBody').innerHTML = html;
-
-  won ? sfx.level() : sfx.over();
-  show('s-end');
-}
-
-/* ---------------- toast ---------------- */
-let toastTimer=null;
-function toast(html, kind){
-  const t = $('toast');
-  t.innerHTML = html;
-  t.className = 'toast '+kind;
-  void t.offsetWidth;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 1500);
-}
-
-/* ---------------- input ---------------- */
-$('pad').querySelectorAll('.key').forEach(k=>{
-  const act = k.getAttribute('data-act');
-  onTap(k, ()=>{
-    if(act==='del') backspace();
-    else if(act==='ok') submit();
-    else typeDigit(k.textContent.trim());
-  });
-});
-document.addEventListener('keydown', e=>{
-  if(!$('s-game').classList.contains('on')) return;
-  if(e.key>='0' && e.key<='9') typeDigit(e.key);
-  else if(e.key==='Backspace'){ e.preventDefault(); backspace(); }
-  else if(e.key==='Enter') submit();
-});
-
-})();
-</script>
+<script src="game.js"></script>
 </body>
 </html>
