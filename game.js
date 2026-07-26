@@ -789,6 +789,7 @@ function judge(given){
     var pts = 10 + timeBonus + (p.combo-1)*3;
     var coins = 2 + Math.floor(p.combo/3);
     p.score += pts; S.coinsEarned += coins; save.coins += coins;
+    store();                    // keep coins even if they wander off mid-night
 
     var trap = trapById(pick(save.traps));
     springTrapArt(trap);
