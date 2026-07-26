@@ -139,6 +139,20 @@
   .key.go{background:var(--green); color:#053; box-shadow:0 5px 0 #24824a;}
   .key.del{background:var(--gold); box-shadow:0 5px 0 #a8802a;}
 
+  /* short screens (iPad landscape): keep the whole game on one screen, no scrolling */
+  @media (max-height:840px){
+    .screen{padding:8px 14px;}
+    .street{height:108px; margin:6px 0 4px;}
+    .house{font-size:58px;}
+    .bandit{font-size:34px;}
+    .trapfx{font-size:30px;}
+    .qcard{padding:6px 14px 10px;}
+    .question{font-size:clamp(30px,7vw,46px);}
+    .answer{font-size:clamp(24px,6vw,36px);}
+    .key{padding:11px 0; font-size:24px;}
+    .pad{gap:6px; margin-top:6px;}
+  }
+
   .toast{
     position:fixed; left:50%; top:16%; transform:translateX(-50%) scale(.6); z-index:9;
     padding:14px 26px; border-radius:18px; font-size:clamp(20px,5vw,30px); font-weight:bold;
