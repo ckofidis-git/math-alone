@@ -229,7 +229,10 @@ a{color:var(--gold);}
               transition:width .25s linear;}
 
 /* ---------------- inputs ---------------- */
-.pad{width:min(760px,100%); display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:9px;}
+/* the wrapper must claim the width itself — inside a centred flex column
+   it would otherwise shrink to fit and squash the keypad into a ribbon */
+#inputArea{width:min(760px,100%);}
+.pad{width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:9px;}
 .key{
   padding:15px 0; font-size:27px; font-weight:bold; border-radius:16px; border:none;
   background:var(--card); color:var(--ink); box-shadow:0 5px 0 #97a9c6;
@@ -237,7 +240,7 @@ a{color:var(--gold);}
 .key:active{transform:translateY(3px); box-shadow:0 2px 0 #97a9c6;}
 .key.go{background:var(--pine); color:#04331a; box-shadow:0 5px 0 #1f8049;}
 .key.del{background:var(--gold); box-shadow:0 5px 0 #a8802a;}
-.choicepad{width:min(760px,100%); display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:9px;}
+.choicepad{width:100%; display:none; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:9px;}
 .choicepad.on{display:grid;}
 .choicepad button{
   padding:22px 6px; font-size:clamp(20px,5.5vw,30px); font-weight:bold; border-radius:16px;
