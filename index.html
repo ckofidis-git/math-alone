@@ -1,0 +1,657 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MATH ALONE — Defend the House!</title>
+<meta name="description" content="A snowy home-defense maths game: solve the sums, spring the traps, keep the Slush Bandits out.">
+<meta name="theme-color" content="#0b1730">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Math Alone">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<style>
+  :root{
+    --night:#0b1730;
+    --night2:#132a52;
+    --snow:#eaf3ff;
+    --gold:#ffcf5c;
+    --red:#e8474b;
+    --green:#48d17a;
+    --ink:#0a1024;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation;}
+  html,body{min-height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;
+    color:var(--snow);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #22406f 0%, transparent 60%),
+      linear-gradient(#0b1730 0%, #142c56 55%, #1d3d70 100%);
+    background-attachment:fixed;
+    overflow-x:hidden;
+    -webkit-user-select:none; user-select:none;
+    -webkit-text-size-adjust:100%;
+  }
+  #snow{position:fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:1;}
+  .flake{position:absolute; top:-5vh; color:#fff; opacity:.8; animation:fall linear infinite;}
+  @keyframes fall{
+    0%{transform:translateY(-10vh) translateX(0) rotate(0deg);}
+    100%{transform:translateY(110vh) translateX(40px) rotate(360deg);}
+  }
+  .screen{position:relative; z-index:2; min-height:100vh; display:none; flex-direction:column; align-items:center;
+          padding:14px; -webkit-overflow-scrolling:touch;}
+  .screen.on{display:flex;}
+  #jserr{display:none; position:fixed; z-index:99; top:0; left:0; right:0; background:#e8474b; color:#fff;
+         font:14px/1.4 monospace; padding:10px; white-space:pre-wrap;}
+
+  /* ---------- START ---------- */
+  h1{
+    font-size:clamp(30px,7vw,60px); margin:6px 0 0; letter-spacing:2px; text-align:center;
+    color:var(--gold);
+    text-shadow:0 0 18px rgba(255,207,92,.5), 3px 3px 0 #7a3b12;
+  }
+  .sub{opacity:.9; text-align:center; margin:2px 0 12px; font-size:clamp(13px,3.4vw,18px);}
+  .panel{
+    width:min(680px,100%); background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.18);
+    border-radius:18px; padding:14px 16px; margin-bottom:12px; backdrop-filter:blur(3px);
+  }
+  .panel h2{margin:0 0 10px; font-size:16px; letter-spacing:1px; text-transform:uppercase; opacity:.85;}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .chip{
+    flex:1 1 auto; min-width:80px; text-align:center; padding:14px 10px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,.10); border:2px solid transparent; font-size:17px; font-weight:bold;
+    transition:transform .1s, background .15s;
+    font-family:inherit; color:inherit; -webkit-appearance:none; appearance:none; display:block;
+  }
+  .chip:active{transform:scale(.96);}
+  .chip.sel{background:var(--gold); color:var(--ink); border-color:#fff;}
+  input[type=text]{
+    flex:1 1 160px; padding:12px; border-radius:12px; border:2px solid rgba(255,255,255,.25);
+    background:rgba(0,0,0,.25); color:#fff; font-size:18px; font-family:inherit;
+  }
+  .big{
+    display:block; width:min(680px,100%); margin:6px auto 20px; padding:18px; border:none; border-radius:20px;
+    background:linear-gradient(#ff6b6b,#d33a3e); color:#fff; font-size:26px; font-weight:bold; letter-spacing:2px;
+    font-family:inherit; cursor:pointer; box-shadow:0 6px 0 #8e2226; text-transform:uppercase;
+  }
+  .big:active{transform:translateY(4px); box-shadow:0 2px 0 #8e2226;}
+
+  /* ---------- GAME ---------- */
+  .hud{width:min(760px,100%); display:flex; gap:8px; justify-content:space-between; align-items:stretch;}
+  .score{
+    flex:1; background:rgba(0,0,0,.28); border:2px solid rgba(255,255,255,.15); border-radius:14px;
+    padding:6px 10px; text-align:center; min-width:0;
+  }
+  .score.active{border-color:var(--gold); background:rgba(255,207,92,.18); box-shadow:0 0 14px rgba(255,207,92,.35);}
+  .score .nm{font-size:13px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .score .pts{font-size:24px; font-weight:bold; color:var(--gold);}
+
+  .street{
+    width:min(760px,100%); height:150px; margin:10px 0 6px; position:relative;
+    border-radius:16px; overflow:hidden;
+    background:linear-gradient(#0d1f42 0%, #1a3a6d 60%, #dfeaff 60%, #cddcf5 100%);
+    border:2px solid rgba(255,255,255,.15);
+  }
+  .house{position:absolute; right:6px; bottom:2px; font-size:78px; line-height:1; filter:drop-shadow(0 0 16px rgba(255,207,92,.6));}
+  .bandit{position:absolute; bottom:14px; font-size:44px; transition:left .45s ease; line-height:1;}
+  .bandit.hit{animation:tumble .6s ease;}
+  @keyframes tumble{
+    0%{transform:rotate(0) translateY(0);}
+    35%{transform:rotate(-25deg) translateY(-22px);}
+    70%{transform:rotate(200deg) translateY(0);}
+    100%{transform:rotate(360deg) translateY(0);}
+  }
+  .trapfx{position:absolute; font-size:40px; opacity:0; pointer-events:none;}
+  .trapfx.go{animation:drop .7s ease-out;}
+  @keyframes drop{0%{opacity:1; transform:translateY(-90px) rotate(0);} 100%{opacity:0; transform:translateY(10px) rotate(180deg);}}
+  .alarm{position:absolute; inset:0; background:rgba(232,71,75,.35); opacity:0; pointer-events:none;}
+  .alarm.go{animation:flash .5s;}
+  @keyframes flash{0%,100%{opacity:0;} 50%{opacity:1;}}
+
+  .steps{position:absolute; left:0; right:0; bottom:0; height:12px; display:flex;}
+  .steps i{flex:1; border-right:2px dashed rgba(255,255,255,.35);}
+
+  .qcard{
+    width:min(760px,100%); background:var(--card); color:var(--ink); border-radius:20px; padding:10px 14px 14px;
+    text-align:center; box-shadow:0 8px 0 rgba(0,0,0,.3);
+  }
+  .turn{font-size:15px; font-weight:bold; color:#5a6b8c; letter-spacing:1px;}
+  .question{font-size:clamp(38px,10vw,64px); font-weight:bold; margin:2px 0 6px; letter-spacing:2px;}
+  .answer{
+    font-size:clamp(30px,8vw,46px); font-weight:bold; min-height:1.2em; color:#123; letter-spacing:3px;
+    border-bottom:5px dotted #b9c6dd; display:inline-block; min-width:150px; padding:0 10px;
+  }
+  .timerbar{height:12px; border-radius:8px; background:#dde6f5; overflow:hidden; margin:8px 0 0;}
+  .timerbar>div{height:100%; width:100%; background:linear-gradient(90deg,#48d17a,#ffcf5c,#e8474b); transition:width .25s linear;}
+
+  .pad{width:min(760px,100%); display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;}
+  .key{
+    padding:16px 0; font-size:28px; font-weight:bold; border-radius:16px; border:none; cursor:pointer;
+    background:#f2f6ff; color:var(--ink); font-family:inherit; box-shadow:0 5px 0 #9fb1cd;
+  }
+  .key:active{transform:translateY(3px); box-shadow:0 2px 0 #9fb1cd;}
+  .key.go{background:var(--green); color:#053; box-shadow:0 5px 0 #24824a;}
+  .key.del{background:var(--gold); box-shadow:0 5px 0 #a8802a;}
+
+  .toast{
+    position:fixed; left:50%; top:16%; transform:translateX(-50%) scale(.6); z-index:9;
+    padding:14px 26px; border-radius:18px; font-size:clamp(20px,5vw,30px); font-weight:bold;
+    opacity:0; pointer-events:none; text-align:center; max-width:92vw;
+  }
+  .toast.show{animation:pop 1.4s ease;}
+  @keyframes pop{
+    0%{opacity:0; transform:translateX(-50%) scale(.5);}
+    15%{opacity:1; transform:translateX(-50%) scale(1.08);}
+    80%{opacity:1; transform:translateX(-50%) scale(1);}
+    100%{opacity:0; transform:translateX(-50%) scale(1);}
+  }
+  .toast.good{background:var(--green); color:#04331a; box-shadow:0 0 30px rgba(72,209,122,.6);}
+  .toast.bad{background:var(--red); color:#fff; box-shadow:0 0 30px rgba(232,71,75,.6);}
+
+  /* ---------- END ---------- */
+  .result{width:min(680px,100%); background:rgba(255,255,255,.10); border-radius:20px; padding:18px; text-align:center;
+          border:2px solid rgba(255,255,255,.2);}
+  .result .line{font-size:22px; margin:8px 0;}
+  .stars{font-size:38px; letter-spacing:6px;}
+  .tiny{font-size:12px; opacity:.6; text-align:center; margin-top:auto; padding-top:10px;}
+</style>
+</head>
+<body>
+<div id="jserr"></div>
+<noscript>
+  <div style="padding:24px;font-size:20px;line-height:1.5;text-align:center">
+    ⚠️ This game needs JavaScript.<br><br>
+    On an iPad, open this file in <b>Safari</b> (or Chrome) — the preview window in Files,
+    Mail or OneDrive cannot run games.
+  </div>
+</noscript>
+<div id="snow"></div>
+
+<!-- ============ START SCREEN ============ -->
+<section id="s-start" class="screen on">
+  <h1>MATH ALONE</h1>
+  <div class="sub">🏠 The Slush Bandits are coming! Solve the math, spring the traps, keep them out! ❄️</div>
+
+  <div class="panel">
+    <h2>Who is defending the house?</h2>
+    <div class="row" id="players" style="margin-bottom:10px">
+      <button type="button" class="chip sel" data-players="1">👧 1 Player</button>
+      <button type="button" class="chip" data-players="2">👧👧 2 Players (take turns)</button>
+    </div>
+    <div class="row">
+      <input id="n1" type="text" placeholder="Player 1 name" maxlength="12">
+      <input id="n2" type="text" placeholder="Player 2 name" maxlength="12" style="display:none">
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Math to practise (tap one or more)</h2>
+    <div class="row" id="ops">
+      <button type="button" class="chip sel" data-op="+">➕ Plus</button>
+      <button type="button" class="chip sel" data-op="-">➖ Minus</button>
+      <button type="button" class="chip" data-op="×">✖️ Times</button>
+      <button type="button" class="chip" data-op="÷">➗ Divide</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>How tricky?</h2>
+    <div class="row" id="diff">
+      <button type="button" class="chip sel" data-diff="1">🐣 Easy</button>
+      <button type="button" class="chip" data-diff="2">🦊 Medium</button>
+      <button type="button" class="chip" data-diff="3">🐉 Hard</button>
+    </div>
+    <div class="row" id="timer" style="margin-top:10px">
+      <button type="button" class="chip sel" data-timer="1">⏱️ Timer on</button>
+      <button type="button" class="chip" data-timer="0">🧘 No timer (relaxed)</button>
+    </div>
+  </div>
+
+  <button class="big" id="startBtn">Start the Watch!</button>
+  <div class="tiny">Best score so far: <span id="bestStart">0</span></div>
+  <div class="tiny"><a href="math-alone-offline.html" style="color:var(--gold)">Quiet practice sheet →</a> (no timer, no rush)</div>
+</section>
+
+<!-- ============ GAME SCREEN ============ -->
+<section id="s-game" class="screen">
+  <div class="hud" id="hud"></div>
+
+  <div class="street" id="street">
+    <div class="alarm" id="alarm"></div>
+    <div class="house">🏠</div>
+    <div class="steps"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="bandit" id="bandit">🦹</div>
+    <div class="trapfx" id="trapfx">🎨</div>
+  </div>
+  <div class="sub" id="statusLine" style="margin:0 0 6px">Wave 1 · Question 1 of 10</div>
+
+  <div class="qcard">
+    <div class="turn" id="turnLine">SARAH'S TURN</div>
+    <div class="question" id="question">7 × 6 = ?</div>
+    <div class="answer" id="answer">&nbsp;</div>
+    <div class="timerbar"><div id="tbar"></div></div>
+  </div>
+
+  <div class="pad" id="pad">
+    <button class="key">1</button><button class="key">2</button><button class="key">3</button>
+    <button class="key">4</button><button class="key">5</button><button class="key">6</button>
+    <button class="key">7</button><button class="key">8</button><button class="key">9</button>
+    <button class="key del" data-act="del">⌫</button>
+    <button class="key">0</button>
+    <button class="key go" data-act="ok">✔</button>
+  </div>
+</section>
+
+<!-- ============ END SCREEN ============ -->
+<section id="s-end" class="screen">
+  <h1 id="endTitle">HOUSE SAVED!</h1>
+  <div class="result" id="endBody"></div>
+  <button class="big" id="againBtn" style="margin-top:16px">Play Again</button>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+window.onerror = function(msg, src, line){
+  var box = document.getElementById('jserr');
+  if(box){ box.style.display='block'; box.textContent = 'Oops, the game hit an error:\n'+msg+'\n(line '+line+')'; }
+};
+(function(){
+"use strict";
+
+/* ---------------- snow ---------------- */
+(function makeSnow(){
+  const box = document.getElementById('snow');
+  const glyphs = ['❄','❅','•','❆'];
+  for(let i=0;i<45;i++){
+    const f = document.createElement('div');
+    f.className='flake';
+    f.textContent = glyphs[i%glyphs.length];
+    f.style.left = Math.random()*100+'vw';
+    f.style.fontSize = (8+Math.random()*16)+'px';
+    f.style.animationDuration = (6+Math.random()*10)+'s';
+    f.style.animationDelay = (-Math.random()*12)+'s';
+    f.style.opacity = (0.3+Math.random()*0.6);
+    box.appendChild(f);
+  }
+})();
+
+/* ---------------- sound ---------------- */
+let actx = null;
+function unlockAudio(){          // iOS only allows sound after a real tap
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+  }catch(e){}
+}
+function beep(freq, dur, type, vol, when){
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime + (when||0);
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type||'sine'; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol||0.14, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g).connect(actx.destination);
+    o.start(t); o.stop(t+dur+0.05);
+  }catch(e){}
+}
+const sfx = {
+  good(){ beep(660,.12,'triangle',.15,0); beep(880,.16,'triangle',.15,.1); beep(1180,.22,'triangle',.13,.2); },
+  bad(){ beep(180,.28,'sawtooth',.12,0); beep(120,.32,'sawtooth',.10,.12); },
+  trap(){ beep(320,.10,'square',.10,0); beep(200,.16,'square',.10,.08); },
+  level(){ [523,659,784,1046].forEach((f,i)=>beep(f,.2,'triangle',.14,i*0.11)); },
+  over(){ [440,392,349,262].forEach((f,i)=>beep(f,.35,'sawtooth',.12,i*0.2)); }
+};
+
+/* ---------------- content ---------------- */
+const TRAPS = [
+  ['🎨','Paint can on a rope — BONK!'],
+  ['🧊','Icy front steps — WHOOPS!'],
+  ['🪶','Feather blizzard — ACHOO!'],
+  ['🚗','Toy cars on the floor — SLIP!'],
+  ['🕷️','Rubber spider drop — AAAH!'],
+  ['🔔','Alarm bells everywhere — CLANG!'],
+  ['🍯','Sticky honey floor — STUCK!'],
+  ['🎈','Balloon avalanche — POP POP!'],
+  ['🧦','Slippery socks on the stairs — WHEE!'],
+  ['🥁','Drum kit tumble — BOOM!'],
+  ['🧴','Soap slide in the hallway — ZOOM!'],
+  ['🪣','Bucket on the head — CLONK!']
+];
+const TAUNTS = [
+  'Heh heh… nobody home!',
+  'This one is TOO easy…',
+  'Get the crowbar, Lanky!',
+  'Almost at the door…',
+  'That kid is no match for us!'
+];
+const CHEERS = ['NICE ONE!','BOOM!','GOT \'EM!','SUPER!','TRAP TIME!','BULLSEYE!','WOW!'];
+
+/* ---------------- state ---------------- */
+const S = {
+  players: [],            // {name, score, right, wrong, streak, best}
+  turn: 0,
+  ops: ['+','-'],
+  diff: 1,
+  useTimer: true,
+  wave: 1,
+  qInWave: 0,
+  qPerWave: 10,
+  threat: 0,              // 0 = far away, 5 = at the door
+  maxThreat: 5,
+  answer: '',
+  current: null,
+  timeLeft: 0,
+  timeMax: 30,
+  tick: null,
+  locked: false
+};
+
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random()*n);
+const pick = a => a[rnd(a.length)];
+
+/* ---------------- question maker ---------------- */
+function makeQuestion(){
+  const op = pick(S.ops);
+  const lvl = Math.min(3, S.diff + Math.floor((S.wave-1)/3));   // gets tougher every 3 waves
+  let a,b,text,ans;
+
+  if(op==='+'){
+    if(lvl===1){ a=2+rnd(18); b=2+rnd(18); }
+    else if(lvl===2){ a=10+rnd(80); b=10+rnd(80); }
+    else { a=100+rnd(400); b=50+rnd(350); }
+    ans = a+b; text = a+' + '+b;
+  }
+  else if(op==='-'){
+    if(lvl===1){ a=5+rnd(15); b=1+rnd(a-1); }
+    else if(lvl===2){ a=20+rnd(80); b=5+rnd(a-5); }
+    else { a=120+rnd(400); b=30+rnd(a-30); }
+    ans = a-b; text = a+' − '+b;
+  }
+  else if(op==='×'){
+    if(lvl===1){ a=pick([2,3,4,5,10]); b=1+rnd(10); }
+    else if(lvl===2){ a=2+rnd(8); b=2+rnd(9); }
+    else { a=2+rnd(11); b=2+rnd(11); }
+    ans = a*b; text = a+' × '+b;
+  }
+  else { // ÷
+    if(lvl===1){ b=pick([2,3,4,5,10]); ans=1+rnd(10); }
+    else if(lvl===2){ b=2+rnd(8); ans=2+rnd(9); }
+    else { b=2+rnd(11); ans=2+rnd(11); }
+    a = b*ans; text = a+' ÷ '+b;
+  }
+  return {text: text+' = ?', ans: ans};
+}
+
+/* ---------------- screens ---------------- */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $(id).classList.add('on');
+}
+
+/* ---------------- start screen wiring ---------------- */
+/* iPad/iOS note: listeners go on each button itself (not the container) and we also
+   accept a touch, so a tap always registers even if the click event is swallowed. */
+function onTap(el, fn){
+  let touched = false, x0 = 0, y0 = 0, moved = false;
+  el.addEventListener('touchstart', e=>{
+    const t = e.changedTouches[0]; x0 = t.clientX; y0 = t.clientY; moved = false;
+  }, {passive:true});
+  el.addEventListener('touchmove', e=>{
+    const t = e.changedTouches[0];
+    if(Math.abs(t.clientX-x0) > 14 || Math.abs(t.clientY-y0) > 14) moved = true;   // finger is scrolling
+  }, {passive:true});
+  el.addEventListener('touchend', e=>{
+    touched = true;
+    if(moved) return;                 // a scroll, not a tap
+    e.preventDefault();
+    fn();
+  }, {passive:false});
+  el.addEventListener('click', ()=>{ if(touched){ touched = false; return; } fn(); });
+}
+
+function group(containerId, multi){
+  const box = $(containerId);
+  box.querySelectorAll('.chip').forEach(c=>{
+    onTap(c, ()=>{
+      if(multi){
+        c.classList.toggle('sel');
+        if(!box.querySelector('.chip.sel')) c.classList.add('sel');   // keep at least one
+      } else {
+        box.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
+        c.classList.add('sel');
+      }
+      unlockAudio(); beep(700,.06,'square',.07,0);
+    });
+  });
+}
+group('ops', true);
+group('diff', false);
+group('timer', false);
+
+let playerCount = 1;
+$('players').querySelectorAll('.chip').forEach(chip=>{
+  onTap(chip, ()=>{
+    $('players').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+    chip.classList.add('sel');
+    playerCount = +chip.getAttribute('data-players');
+    $('n2').style.display = playerCount===2 ? '' : 'none';
+    unlockAudio(); beep(700,.06,'square',.07,0);
+  });
+});
+
+$('bestStart').textContent = localStorage.getItem('mathAlone.best') || 0;
+
+onTap($('startBtn'), ()=>{ unlockAudio(); startGame(); });
+onTap($('againBtn'), ()=>{ show('s-start'); window.scrollTo(0,0); });
+
+/* ---------------- game flow ---------------- */
+function startGame(){
+  S.ops  = [...document.querySelectorAll('#ops .chip.sel')].map(c=>c.dataset.op);
+  S.diff = +document.querySelector('#diff .chip.sel').dataset.diff;
+  S.useTimer = document.querySelector('#timer .chip.sel').dataset.timer === '1';
+  S.timeMax = S.diff===1 ? 30 : 25;
+
+  const names = [ ($('n1').value.trim() || 'Player 1') ];
+  if(playerCount===2) names.push( $('n2').value.trim() || 'Player 2' );
+  S.players = names.map(n=>({name:n, score:0, right:0, wrong:0, streak:0, best:0}));
+
+  S.turn = 0; S.wave = 1; S.qInWave = 0; S.threat = 0; S.locked = false;
+  buildHud();
+  show('s-game');
+  nextQuestion();
+}
+
+function buildHud(){
+  $('hud').innerHTML = S.players.map((p,i)=>
+    `<div class="score" id="sc${i}"><div class="nm">${escapeHtml(p.name)}</div><div class="pts" id="pts${i}">0</div></div>`
+  ).join('');
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function paintHud(){
+  S.players.forEach((p,i)=>{
+    $('pts'+i).textContent = p.score;
+    $('sc'+i).classList.toggle('active', i===S.turn);
+  });
+  $('turnLine').textContent = (S.players.length>1 ? S.players[S.turn].name.toUpperCase()+"'S TURN" : 'YOUR TURN');
+  $('statusLine').textContent = `Wave ${S.wave} · Question ${S.qInWave+1} of ${S.qPerWave} · ${'❤️'.repeat(S.maxThreat-S.threat)}`;
+  const b = $('bandit');
+  b.style.left = (4 + S.threat*13.5) + '%';
+  b.textContent = S.threat>=4 ? '🦹‍♂️' : '🦹';
+}
+
+function nextQuestion(){
+  S.answer=''; $('answer').innerHTML='&nbsp;';
+  S.current = makeQuestion();
+  $('question').textContent = S.current.text;
+  paintHud();
+  S.locked = false;
+
+  clearInterval(S.tick);
+  if(S.useTimer){
+    S.timeLeft = S.timeMax;
+    $('tbar').style.width = '100%';
+    S.tick = setInterval(()=>{
+      S.timeLeft -= 0.25;
+      $('tbar').style.width = Math.max(0, S.timeLeft/S.timeMax*100)+'%';
+      if(S.timeLeft<=0){ clearInterval(S.tick); judge(null); }
+    },250);
+  } else {
+    $('tbar').style.width = '100%';
+  }
+}
+
+function typeDigit(d){
+  if(S.locked) return;
+  if(S.answer.length>=5) return;
+  S.answer += d;
+  $('answer').textContent = S.answer;
+  beep(520,.05,'square',.06,0);
+}
+function backspace(){
+  if(S.locked) return;
+  S.answer = S.answer.slice(0,-1);
+  $('answer').innerHTML = S.answer || '&nbsp;';
+  beep(300,.05,'square',.06,0);
+}
+function submit(){
+  if(S.locked || S.answer==='') return;
+  judge(parseInt(S.answer,10));
+}
+
+function judge(given){
+  S.locked = true;
+  clearInterval(S.tick);
+  const p = S.players[S.turn];
+  const correct = (given !== null && given === S.current.ans);
+
+  if(correct){
+    const timeBonus = S.useTimer ? Math.max(0, Math.round(S.timeLeft)) : 5;
+    p.streak++;
+    const pts = 10 + timeBonus + (p.streak-1)*3;
+    p.score += pts; p.right++;
+    if(S.threat>0) S.threat--;
+    springTrap(pts);
+    sfx.good();
+  } else {
+    p.streak = 0; p.wrong++;
+    S.threat++;
+    const msg = given===null ? '⏰ TOO SLOW!' : '❌ Oops!';
+    toast(msg+'<br><span style="font-size:.7em">'+S.current.text.replace('?', S.current.ans)+'</span>', 'bad');
+    $('alarm').classList.remove('go'); void $('alarm').offsetWidth; $('alarm').classList.add('go');
+    sfx.bad();
+  }
+  paintHud();               // move the bandit right away so the kids see the effect
+
+  setTimeout(()=>{
+    if(S.threat >= S.maxThreat){ endGame(false); return; }
+    S.qInWave++;
+    if(S.players.length>1) S.turn = (S.turn+1) % S.players.length;
+    if(S.qInWave >= S.qPerWave){ waveComplete(); return; }
+    nextQuestion();
+  }, correct ? 1150 : 1750);
+}
+
+function springTrap(pts){
+  const [icon,line] = pick(TRAPS);
+  const fx = $('trapfx');
+  fx.textContent = icon;
+  fx.style.left = (4 + S.threat*13.5 + 1) + '%';
+  fx.style.bottom = '40px';
+  fx.classList.remove('go'); void fx.offsetWidth; fx.classList.add('go');
+  const b = $('bandit');
+  b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit');
+  sfx.trap();
+  toast(pick(CHEERS)+'<br><span style="font-size:.62em">'+icon+' '+line+'  +'+pts+'</span>','good');
+}
+
+function waveComplete(){
+  sfx.level();
+  S.wave++; S.qInWave = 0;
+  if(S.threat>0) S.threat--;                       // reward: push the bandits back
+  toast('🎉 WAVE '+(S.wave-1)+' CLEARED! 🎉<br><span style="font-size:.6em">'+pick(TAUNTS)+'</span>','good');
+  paintHud();
+  setTimeout(()=>{
+    if(S.wave>6){ endGame(true); } else { nextQuestion(); }
+  }, 1800);
+}
+
+function endGame(won){
+  clearInterval(S.tick);
+  const total = S.players.reduce((s,p)=>s+p.score,0);
+  const best = +(localStorage.getItem('mathAlone.best')||0);
+  if(total>best) localStorage.setItem('mathAlone.best', total);
+
+  $('endTitle').textContent = won ? 'HOUSE SAVED! 🏆' : 'THEY GOT IN! 🚨';
+  $('endTitle').style.color = won ? '#ffcf5c' : '#ff8a8d';
+
+  let html = '<div style="font-size:56px">'+(won?'🏠✨':'🦹💨')+'</div>';
+  html += '<div class="line">'+(won
+      ? 'The Slush Bandits ran off into the snow. Brilliant defending!'
+      : 'The bandits slipped past this time — try again and trap them sooner!')+'</div>';
+
+  S.players.forEach(p=>{
+    const asked = p.right + p.wrong;
+    const pct = asked ? Math.round(p.right/asked*100) : 0;
+    const stars = pct>=90?5 : pct>=75?4 : pct>=60?3 : pct>=40?2 : 1;
+    html += `<div class="line" style="margin-top:14px">
+      <b>${escapeHtml(p.name)}</b><br>
+      ${p.score} points · ${p.right}/${asked} correct (${pct}%)<br>
+      <span class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(5-stars)}</span></div>`;
+  });
+
+  if(S.players.length>1){
+    const [a,b] = S.players;
+    html += '<div class="line" style="margin-top:14px">'+
+      (a.score===b.score ? '🤝 A perfect tie — great teamwork!'
+        : '👑 Best defender this round: <b>'+escapeHtml(a.score>b.score?a.name:b.name)+'</b>')+'</div>';
+  }
+  html += '<div class="line" style="opacity:.7;font-size:16px">Team total: '+total+' · Best ever: '+Math.max(total,best)+'</div>';
+  $('endBody').innerHTML = html;
+
+  won ? sfx.level() : sfx.over();
+  show('s-end');
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer=null;
+function toast(html, kind){
+  const t = $('toast');
+  t.innerHTML = html;
+  t.className = 'toast '+kind;
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1500);
+}
+
+/* ---------------- input ---------------- */
+$('pad').querySelectorAll('.key').forEach(k=>{
+  const act = k.getAttribute('data-act');
+  onTap(k, ()=>{
+    if(act==='del') backspace();
+    else if(act==='ok') submit();
+    else typeDigit(k.textContent.trim());
+  });
+});
+document.addEventListener('keydown', e=>{
+  if(!$('s-game').classList.contains('on')) return;
+  if(e.key>='0' && e.key<='9') typeDigit(e.key);
+  else if(e.key==='Backspace'){ e.preventDefault(); backspace(); }
+  else if(e.key==='Enter') submit();
+});
+
+})();
+</script>
+</body>
+</html>

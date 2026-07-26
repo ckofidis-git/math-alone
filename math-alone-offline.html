@@ -1,0 +1,680 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MATH ALONE &#8212; Practice Sheet</title>
+<style>
+  :root{
+    --night:#0b1730; --gold:#ffcf5c; --snow:#eaf3ff;
+    --ink:#0a1024; --green:#2fae63; --red:#e8474b;
+    --p1:#7fc4ff; --p2:#ffa8d2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; padding:14px 14px 92px;
+    font-family:"Trebuchet MS","Segoe UI",Verdana,sans-serif;
+    color:var(--snow);
+    background:linear-gradient(#0b1730 0%, #142c56 55%, #1d3d70 100%);
+    background-attachment:fixed;
+    -webkit-text-size-adjust:100%;
+    counter-reset: p1hit 0 p1miss 0 p2hit 0 p2miss 0;
+  }
+  header{text-align:center; margin-bottom:14px;}
+  h1{
+    font-size:clamp(28px,7vw,54px); margin:4px 0; letter-spacing:2px; color:var(--gold);
+    text-shadow:0 0 18px rgba(255,207,92,.45), 3px 3px 0 #7a3b12;
+  }
+  .sub{font-size:clamp(13px,3.2vw,17px); opacity:.9; margin:0 auto; max-width:34em; line-height:1.5;}
+  h2{
+    font-size:clamp(16px,4vw,22px); color:var(--gold); margin:26px 0 10px;
+    border-bottom:2px dashed rgba(255,255,255,.25); padding-bottom:6px;
+  }
+  .card{
+    position:relative; background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.16);
+    border-radius:16px; padding:12px 14px; margin-bottom:12px;
+  }
+  .card.p1{border-left:8px solid var(--p1);}
+  .card.p2{border-left:8px solid var(--p2);}
+  .who{font-size:12px; letter-spacing:1px; text-transform:uppercase; opacity:.75;}
+  .prob{font-size:clamp(26px,7vw,40px); font-weight:bold; margin:2px 0 10px; letter-spacing:2px;}
+  .choices{position:relative; display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .choices input{position:absolute; opacity:0; width:1px; height:1px; margin:0; pointer-events:none;}
+  .choices label{
+    display:block; text-align:center; padding:16px 4px; border-radius:14px; cursor:pointer;
+    background:#f2f6ff; color:var(--ink); font-size:clamp(20px,5vw,26px); font-weight:bold;
+    box-shadow:0 5px 0 #9fb1cd; font-variant-numeric:tabular-nums;
+  }
+  .choices label:active{transform:translateY(3px); box-shadow:0 2px 0 #9fb1cd;}
+  .r:checked + label{background:var(--green); color:#fff; box-shadow:0 5px 0 #1c7a44;}
+  .w:checked + label{background:var(--red); color:#fff; box-shadow:0 5px 0 #93272a;}
+  .msg{grid-column:1 / -1; display:none; margin-top:4px; padding:10px 12px; border-radius:12px;
+       font-size:clamp(15px,3.6vw,19px); font-weight:bold; line-height:1.4;}
+  .r:checked ~ .msg.good{display:block; background:rgba(47,174,99,.25); border:2px solid var(--green);}
+  .w:checked ~ .msg.bad{display:block; background:rgba(232,71,75,.22); border:2px solid var(--red);}
+  .card.p1 .r:checked{counter-increment:p1hit;}
+  .card.p1 .w:checked{counter-increment:p1miss;}
+  .card.p2 .r:checked{counter-increment:p2hit;}
+  .card.p2 .w:checked{counter-increment:p2miss;}
+  #board{
+    position:fixed; left:0; right:0; bottom:0; z-index:5;
+    display:flex; gap:10px; padding:10px 12px;
+    background:rgba(6,14,32,.94); border-top:2px solid rgba(255,255,255,.2);
+    font-size:clamp(13px,3.4vw,17px); font-weight:bold;
+  }
+  #board div{flex:1; text-align:center; border-radius:12px; padding:6px 4px;}
+  #board .one{background:rgba(127,196,255,.16); border:2px solid var(--p1);}
+  #board .two{background:rgba(255,168,210,.16); border:2px solid var(--p2);}
+  .nm{display:block; font-size:12px; opacity:.85; text-transform:uppercase; letter-spacing:1px;}
+  .tally{font-size:clamp(16px,4.5vw,22px); font-variant-numeric:tabular-nums;}
+  .c1h::after{content:counter(p1hit);} .c1m::after{content:counter(p1miss);}
+  .c2h::after{content:counter(p2hit);} .c2m::after{content:counter(p2miss);}
+  .finish{
+    background:rgba(255,255,255,.10); border:2px solid var(--gold); border-radius:18px;
+    padding:18px; text-align:center; margin-top:26px; font-size:clamp(15px,4vw,20px); line-height:1.6;
+  }
+  .finish b{color:var(--gold);}
+  .hint{text-align:center; opacity:.6; font-size:13px; margin-top:14px;}
+</style>
+</head>
+<body>
+<header>
+<h1>MATH ALONE</h1>
+<p class="sub">&#127968; The Slush Bandits are creeping up the street. Tap the right answer to spring a trap and send them flying. Tap a wrong one and they sneak a step closer. &#10052;</p>
+<p class="sub" style="margin-top:8px;opacity:.7">&#128103; <b>Player 1</b> takes the blue questions, <b>Player 2</b> takes the pink ones. Scores add up at the bottom of the screen.</p>
+</header>
+<h2>Wave 1 &#8212; Plus and Minus to 20</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 1</div>
+  <div class="prob">18 &#8722; 14 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q1" id="q1o1" class="w"><label for="q1o1">14</label>
+    <input type="radio" name="q1" id="q1o2" class="w"><label for="q1o2">3</label>
+    <input type="radio" name="q1" id="q1o3" class="w"><label for="q1o3">1</label>
+    <input type="radio" name="q1" id="q1o4" class="r"><label for="q1o4">4</label>
+    <div class="msg good">&#129718; Feather blizzard &#8212; ACHOO! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>4</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 2</div>
+  <div class="prob">4 + 14 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q2" id="q2o1" class="w"><label for="q2o1">21</label>
+    <input type="radio" name="q2" id="q2o2" class="w"><label for="q2o2">16</label>
+    <input type="radio" name="q2" id="q2o3" class="r"><label for="q2o3">18</label>
+    <input type="radio" name="q2" id="q2o4" class="w"><label for="q2o4">19</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>18</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 3</div>
+  <div class="prob">7 + 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q3" id="q3o1" class="r"><label for="q3o1">11</label>
+    <input type="radio" name="q3" id="q3o2" class="w"><label for="q3o2">16</label>
+    <input type="radio" name="q3" id="q3o3" class="w"><label for="q3o3">9</label>
+    <input type="radio" name="q3" id="q3o4" class="w"><label for="q3o4">6</label>
+    <div class="msg good">&#129718; Feather blizzard &#8212; ACHOO! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>11</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 4</div>
+  <div class="prob">10 &#8722; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q4" id="q4o1" class="w"><label for="q4o1">8</label>
+    <input type="radio" name="q4" id="q4o2" class="r"><label for="q4o2">7</label>
+    <input type="radio" name="q4" id="q4o3" class="w"><label for="q4o3">5</label>
+    <input type="radio" name="q4" id="q4o4" class="w"><label for="q4o4">9</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>7</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 5</div>
+  <div class="prob">5 + 8 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q5" id="q5o1" class="w"><label for="q5o1">18</label>
+    <input type="radio" name="q5" id="q5o2" class="w"><label for="q5o2">14</label>
+    <input type="radio" name="q5" id="q5o3" class="r"><label for="q5o3">13</label>
+    <input type="radio" name="q5" id="q5o4" class="w"><label for="q5o4">23</label>
+    <div class="msg good">&#129506; Slippery socks on the stairs &#8212; WHEE! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>13</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 6</div>
+  <div class="prob">11 + 9 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q6" id="q6o1" class="r"><label for="q6o1">20</label>
+    <input type="radio" name="q6" id="q6o2" class="w"><label for="q6o2">30</label>
+    <input type="radio" name="q6" id="q6o3" class="w"><label for="q6o3">21</label>
+    <input type="radio" name="q6" id="q6o4" class="w"><label for="q6o4">22</label>
+    <div class="msg good">&#129506; Slippery socks on the stairs &#8212; WHEE! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>20</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 7</div>
+  <div class="prob">19 + 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q7" id="q7o1" class="r"><label for="q7o1">21</label>
+    <input type="radio" name="q7" id="q7o2" class="w"><label for="q7o2">24</label>
+    <input type="radio" name="q7" id="q7o3" class="w"><label for="q7o3">19</label>
+    <input type="radio" name="q7" id="q7o4" class="w"><label for="q7o4">22</label>
+    <div class="msg good">&#129345; Drum kit tumble &#8212; BOOM! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>21</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 8</div>
+  <div class="prob">18 &#8722; 1 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q8" id="q8o1" class="w"><label for="q8o1">7</label>
+    <input type="radio" name="q8" id="q8o2" class="w"><label for="q8o2">22</label>
+    <input type="radio" name="q8" id="q8o3" class="r"><label for="q8o3">17</label>
+    <input type="radio" name="q8" id="q8o4" class="w"><label for="q8o4">12</label>
+    <div class="msg good">&#127912; Paint can on a rope &#8212; BONK! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>17</b>.</div>
+  </div>
+</div>
+<h2>Wave 2 &#8212; Plus and Minus to 100</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 9</div>
+  <div class="prob">78 + 11 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q9" id="q9o1" class="r"><label for="q9o1">89</label>
+    <input type="radio" name="q9" id="q9o2" class="w"><label for="q9o2">84</label>
+    <input type="radio" name="q9" id="q9o3" class="w"><label for="q9o3">86</label>
+    <input type="radio" name="q9" id="q9o4" class="w"><label for="q9o4">87</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>89</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 10</div>
+  <div class="prob">52 &#8722; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q10" id="q10o1" class="w"><label for="q10o1">51</label>
+    <input type="radio" name="q10" id="q10o2" class="w"><label for="q10o2">47</label>
+    <input type="radio" name="q10" id="q10o3" class="r"><label for="q10o3">49</label>
+    <input type="radio" name="q10" id="q10o4" class="w"><label for="q10o4">48</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>49</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 11</div>
+  <div class="prob">9 &#8722; 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q11" id="q11o1" class="w"><label for="q11o1">4</label>
+    <input type="radio" name="q11" id="q11o2" class="r"><label for="q11o2">5</label>
+    <input type="radio" name="q11" id="q11o3" class="w"><label for="q11o3">15</label>
+    <input type="radio" name="q11" id="q11o4" class="w"><label for="q11o4">7</label>
+    <div class="msg good">&#128375; Rubber spider drop &#8212; AAAH! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>5</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 12</div>
+  <div class="prob">79 &#8722; 24 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q12" id="q12o1" class="w"><label for="q12o1">54</label>
+    <input type="radio" name="q12" id="q12o2" class="w"><label for="q12o2">58</label>
+    <input type="radio" name="q12" id="q12o3" class="w"><label for="q12o3">45</label>
+    <input type="radio" name="q12" id="q12o4" class="r"><label for="q12o4">55</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>55</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 13</div>
+  <div class="prob">27 + 30 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q13" id="q13o1" class="w"><label for="q13o1">54</label>
+    <input type="radio" name="q13" id="q13o2" class="w"><label for="q13o2">67</label>
+    <input type="radio" name="q13" id="q13o3" class="r"><label for="q13o3">57</label>
+    <input type="radio" name="q13" id="q13o4" class="w"><label for="q13o4">56</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>57</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 14</div>
+  <div class="prob">28 + 56 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q14" id="q14o1" class="w"><label for="q14o1">79</label>
+    <input type="radio" name="q14" id="q14o2" class="w"><label for="q14o2">74</label>
+    <input type="radio" name="q14" id="q14o3" class="w"><label for="q14o3">94</label>
+    <input type="radio" name="q14" id="q14o4" class="r"><label for="q14o4">84</label>
+    <div class="msg good">&#128375; Rubber spider drop &#8212; AAAH! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>84</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 15</div>
+  <div class="prob">6 + 5 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q15" id="q15o1" class="w"><label for="q15o1">10</label>
+    <input type="radio" name="q15" id="q15o2" class="r"><label for="q15o2">11</label>
+    <input type="radio" name="q15" id="q15o3" class="w"><label for="q15o3">1</label>
+    <input type="radio" name="q15" id="q15o4" class="w"><label for="q15o4">13</label>
+    <div class="msg good">&#128663; Toy cars on the floor &#8212; SLIP! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>11</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 16</div>
+  <div class="prob">80 + 15 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q16" id="q16o1" class="w"><label for="q16o1">100</label>
+    <input type="radio" name="q16" id="q16o2" class="w"><label for="q16o2">94</label>
+    <input type="radio" name="q16" id="q16o3" class="w"><label for="q16o3">90</label>
+    <input type="radio" name="q16" id="q16o4" class="r"><label for="q16o4">95</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>95</b>.</div>
+  </div>
+</div>
+<h2>Wave 3 &#8212; Times 2, 5 and 10</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 17</div>
+  <div class="prob">5 &#215; 8 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q17" id="q17o1" class="w"><label for="q17o1">41</label>
+    <input type="radio" name="q17" id="q17o2" class="w"><label for="q17o2">30</label>
+    <input type="radio" name="q17" id="q17o3" class="r"><label for="q17o3">40</label>
+    <input type="radio" name="q17" id="q17o4" class="w"><label for="q17o4">35</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>40</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 18</div>
+  <div class="prob">5 &#215; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q18" id="q18o1" class="r"><label for="q18o1">15</label>
+    <input type="radio" name="q18" id="q18o2" class="w"><label for="q18o2">13</label>
+    <input type="radio" name="q18" id="q18o3" class="w"><label for="q18o3">18</label>
+    <input type="radio" name="q18" id="q18o4" class="w"><label for="q18o4">17</label>
+    <div class="msg good">&#129508; Soap slide in the hallway &#8212; ZOOM! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>15</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 19</div>
+  <div class="prob">2 &#215; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q19" id="q19o1" class="w"><label for="q19o1">18</label>
+    <input type="radio" name="q19" id="q19o2" class="w"><label for="q19o2">30</label>
+    <input type="radio" name="q19" id="q19o3" class="r"><label for="q19o3">20</label>
+    <input type="radio" name="q19" id="q19o4" class="w"><label for="q19o4">19</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>20</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 20</div>
+  <div class="prob">5 &#215; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q20" id="q20o1" class="w"><label for="q20o1">49</label>
+    <input type="radio" name="q20" id="q20o2" class="w"><label for="q20o2">52</label>
+    <input type="radio" name="q20" id="q20o3" class="w"><label for="q20o3">60</label>
+    <input type="radio" name="q20" id="q20o4" class="r"><label for="q20o4">50</label>
+    <div class="msg good">&#129718; Feather blizzard &#8212; ACHOO! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>50</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 21</div>
+  <div class="prob">2 &#215; 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q21" id="q21o1" class="r"><label for="q21o1">8</label>
+    <input type="radio" name="q21" id="q21o2" class="w"><label for="q21o2">10</label>
+    <input type="radio" name="q21" id="q21o3" class="w"><label for="q21o3">3</label>
+    <input type="radio" name="q21" id="q21o4" class="w"><label for="q21o4">9</label>
+    <div class="msg good">&#128276; Alarm bells everywhere &#8212; CLANG! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>8</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 22</div>
+  <div class="prob">2 &#215; 9 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q22" id="q22o1" class="w"><label for="q22o1">20</label>
+    <input type="radio" name="q22" id="q22o2" class="r"><label for="q22o2">18</label>
+    <input type="radio" name="q22" id="q22o3" class="w"><label for="q22o3">13</label>
+    <input type="radio" name="q22" id="q22o4" class="w"><label for="q22o4">16</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>18</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 23</div>
+  <div class="prob">2 &#215; 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q23" id="q23o1" class="w"><label for="q23o1">13</label>
+    <input type="radio" name="q23" id="q23o2" class="w"><label for="q23o2">9</label>
+    <input type="radio" name="q23" id="q23o3" class="w"><label for="q23o3">5</label>
+    <input type="radio" name="q23" id="q23o4" class="r"><label for="q23o4">8</label>
+    <div class="msg good">&#129345; Drum kit tumble &#8212; BOOM! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>8</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 24</div>
+  <div class="prob">5 &#215; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q24" id="q24o1" class="r"><label for="q24o1">10</label>
+    <input type="radio" name="q24" id="q24o2" class="w"><label for="q24o2">13</label>
+    <input type="radio" name="q24" id="q24o3" class="w"><label for="q24o3">15</label>
+    <input type="radio" name="q24" id="q24o4" class="w"><label for="q24o4">7</label>
+    <div class="msg good">&#128276; Alarm bells everywhere &#8212; CLANG! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>10</b>.</div>
+  </div>
+</div>
+<h2>Wave 4 &#8212; Times 3, 4 and 6</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 25</div>
+  <div class="prob">6 &#215; 5 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q25" id="q25o1" class="w"><label for="q25o1">27</label>
+    <input type="radio" name="q25" id="q25o2" class="r"><label for="q25o2">30</label>
+    <input type="radio" name="q25" id="q25o3" class="w"><label for="q25o3">20</label>
+    <input type="radio" name="q25" id="q25o4" class="w"><label for="q25o4">28</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>30</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 26</div>
+  <div class="prob">6 &#215; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q26" id="q26o1" class="w"><label for="q26o1">65</label>
+    <input type="radio" name="q26" id="q26o2" class="w"><label for="q26o2">59</label>
+    <input type="radio" name="q26" id="q26o3" class="w"><label for="q26o3">50</label>
+    <input type="radio" name="q26" id="q26o4" class="r"><label for="q26o4">60</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>60</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 27</div>
+  <div class="prob">3 &#215; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q27" id="q27o1" class="w"><label for="q27o1">4</label>
+    <input type="radio" name="q27" id="q27o2" class="w"><label for="q27o2">5</label>
+    <input type="radio" name="q27" id="q27o3" class="w"><label for="q27o3">7</label>
+    <input type="radio" name="q27" id="q27o4" class="r"><label for="q27o4">6</label>
+    <div class="msg good">&#129699; Bucket on the head &#8212; CLONK! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>6</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 28</div>
+  <div class="prob">6 &#215; 9 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q28" id="q28o1" class="w"><label for="q28o1">44</label>
+    <input type="radio" name="q28" id="q28o2" class="w"><label for="q28o2">53</label>
+    <input type="radio" name="q28" id="q28o3" class="w"><label for="q28o3">57</label>
+    <input type="radio" name="q28" id="q28o4" class="r"><label for="q28o4">54</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Heh heh... that one got past you! The answer was <b>54</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 29</div>
+  <div class="prob">3 &#215; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q29" id="q29o1" class="w"><label for="q29o1">4</label>
+    <input type="radio" name="q29" id="q29o2" class="w"><label for="q29o2">8</label>
+    <input type="radio" name="q29" id="q29o3" class="r"><label for="q29o3">9</label>
+    <input type="radio" name="q29" id="q29o4" class="w"><label for="q29o4">14</label>
+    <div class="msg good">&#129345; Drum kit tumble &#8212; BOOM! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>9</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 30</div>
+  <div class="prob">6 &#215; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q30" id="q30o1" class="w"><label for="q30o1">15</label>
+    <input type="radio" name="q30" id="q30o2" class="r"><label for="q30o2">12</label>
+    <input type="radio" name="q30" id="q30o3" class="w"><label for="q30o3">2</label>
+    <input type="radio" name="q30" id="q30o4" class="w"><label for="q30o4">22</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>12</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 31</div>
+  <div class="prob">6 &#215; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q31" id="q31o1" class="w"><label for="q31o1">17</label>
+    <input type="radio" name="q31" id="q31o2" class="r"><label for="q31o2">18</label>
+    <input type="radio" name="q31" id="q31o3" class="w"><label for="q31o3">13</label>
+    <input type="radio" name="q31" id="q31o4" class="w"><label for="q31o4">16</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>18</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 32</div>
+  <div class="prob">3 &#215; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q32" id="q32o1" class="w"><label for="q32o1">40</label>
+    <input type="radio" name="q32" id="q32o2" class="r"><label for="q32o2">30</label>
+    <input type="radio" name="q32" id="q32o3" class="w"><label for="q32o3">25</label>
+    <input type="radio" name="q32" id="q32o4" class="w"><label for="q32o4">27</label>
+    <div class="msg good">&#128276; Alarm bells everywhere &#8212; CLANG! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>30</b>.</div>
+  </div>
+</div>
+<h2>Wave 5 &#8212; Sharing (division)</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 33</div>
+  <div class="prob">6 &#247; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q33" id="q33o1" class="w"><label for="q33o1">5</label>
+    <input type="radio" name="q33" id="q33o2" class="w"><label for="q33o2">1</label>
+    <input type="radio" name="q33" id="q33o3" class="w"><label for="q33o3">4</label>
+    <input type="radio" name="q33" id="q33o4" class="r"><label for="q33o4">2</label>
+    <div class="msg good">&#129508; Soap slide in the hallway &#8212; ZOOM! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>2</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 34</div>
+  <div class="prob">30 &#247; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q34" id="q34o1" class="w"><label for="q34o1">6</label>
+    <input type="radio" name="q34" id="q34o2" class="w"><label for="q34o2">8</label>
+    <input type="radio" name="q34" id="q34o3" class="w"><label for="q34o3">4</label>
+    <input type="radio" name="q34" id="q34o4" class="r"><label for="q34o4">3</label>
+    <div class="msg good">&#129506; Slippery socks on the stairs &#8212; WHEE! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>3</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 35</div>
+  <div class="prob">50 &#247; 5 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q35" id="q35o1" class="w"><label for="q35o1">9</label>
+    <input type="radio" name="q35" id="q35o2" class="w"><label for="q35o2">5</label>
+    <input type="radio" name="q35" id="q35o3" class="r"><label for="q35o3">10</label>
+    <input type="radio" name="q35" id="q35o4" class="w"><label for="q35o4">15</label>
+    <div class="msg good">&#127912; Paint can on a rope &#8212; BONK! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>10</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 36</div>
+  <div class="prob">6 &#247; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q36" id="q36o1" class="w"><label for="q36o1">5</label>
+    <input type="radio" name="q36" id="q36o2" class="r"><label for="q36o2">3</label>
+    <input type="radio" name="q36" id="q36o3" class="w"><label for="q36o3">13</label>
+    <input type="radio" name="q36" id="q36o4" class="w"><label for="q36o4">6</label>
+    <div class="msg good">&#127912; Paint can on a rope &#8212; BONK! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>3</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 37</div>
+  <div class="prob">8 &#247; 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q37" id="q37o1" class="w"><label for="q37o1">1</label>
+    <input type="radio" name="q37" id="q37o2" class="w"><label for="q37o2">12</label>
+    <input type="radio" name="q37" id="q37o3" class="r"><label for="q37o3">2</label>
+    <input type="radio" name="q37" id="q37o4" class="w"><label for="q37o4">0</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>2</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 38</div>
+  <div class="prob">12 &#247; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q38" id="q38o1" class="w"><label for="q38o1">2</label>
+    <input type="radio" name="q38" id="q38o2" class="w"><label for="q38o2">1</label>
+    <input type="radio" name="q38" id="q38o3" class="w"><label for="q38o3">9</label>
+    <input type="radio" name="q38" id="q38o4" class="r"><label for="q38o4">4</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>4</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 39</div>
+  <div class="prob">100 &#247; 10 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q39" id="q39o1" class="w"><label for="q39o1">15</label>
+    <input type="radio" name="q39" id="q39o2" class="w"><label for="q39o2">9</label>
+    <input type="radio" name="q39" id="q39o3" class="w"><label for="q39o3">12</label>
+    <input type="radio" name="q39" id="q39o4" class="r"><label for="q39o4">10</label>
+    <div class="msg good">&#129718; Feather blizzard &#8212; ACHOO! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>10</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 40</div>
+  <div class="prob">8 &#247; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q40" id="q40o1" class="r"><label for="q40o1">4</label>
+    <input type="radio" name="q40" id="q40o2" class="w"><label for="q40o2">7</label>
+    <input type="radio" name="q40" id="q40o3" class="w"><label for="q40o3">3</label>
+    <input type="radio" name="q40" id="q40o4" class="w"><label for="q40o4">6</label>
+    <div class="msg good">&#127912; Paint can on a rope &#8212; BONK! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>4</b>.</div>
+  </div>
+</div>
+<h2>Wave 6 &#8212; Bandit Boss Mix</h2>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 41</div>
+  <div class="prob">18 &#247; 2 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q41" id="q41o1" class="r"><label for="q41o1">9</label>
+    <input type="radio" name="q41" id="q41o2" class="w"><label for="q41o2">19</label>
+    <input type="radio" name="q41" id="q41o3" class="w"><label for="q41o3">14</label>
+    <input type="radio" name="q41" id="q41o4" class="w"><label for="q41o4">4</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>9</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 42</div>
+  <div class="prob">24 &#247; 3 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q42" id="q42o1" class="w"><label for="q42o1">6</label>
+    <input type="radio" name="q42" id="q42o2" class="r"><label for="q42o2">8</label>
+    <input type="radio" name="q42" id="q42o3" class="w"><label for="q42o3">5</label>
+    <input type="radio" name="q42" id="q42o4" class="w"><label for="q42o4">10</label>
+    <div class="msg good">&#129506; Slippery socks on the stairs &#8212; WHEE! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>8</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 43</div>
+  <div class="prob">36 &#8722; 31 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q43" id="q43o1" class="w"><label for="q43o1">10</label>
+    <input type="radio" name="q43" id="q43o2" class="w"><label for="q43o2">4</label>
+    <input type="radio" name="q43" id="q43o3" class="w"><label for="q43o3">3</label>
+    <input type="radio" name="q43" id="q43o4" class="r"><label for="q43o4">5</label>
+    <div class="msg good">&#128276; Alarm bells everywhere &#8212; CLANG! Trapped!</div>
+    <div class="msg bad">&#128520; Nobody home, nobody home! The answer was <b>5</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 44</div>
+  <div class="prob">55 + 13 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q44" id="q44o1" class="w"><label for="q44o1">78</label>
+    <input type="radio" name="q44" id="q44o2" class="w"><label for="q44o2">66</label>
+    <input type="radio" name="q44" id="q44o3" class="r"><label for="q44o3">68</label>
+    <input type="radio" name="q44" id="q44o4" class="w"><label for="q44o4">73</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>68</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 45</div>
+  <div class="prob">5 &#215; 8 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q45" id="q45o1" class="w"><label for="q45o1">37</label>
+    <input type="radio" name="q45" id="q45o2" class="r"><label for="q45o2">40</label>
+    <input type="radio" name="q45" id="q45o3" class="w"><label for="q45o3">38</label>
+    <input type="radio" name="q45" id="q45o4" class="w"><label for="q45o4">42</label>
+    <div class="msg good">&#127880; Balloon avalanche &#8212; POP POP! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>40</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 46</div>
+  <div class="prob">10 &#247; 5 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q46" id="q46o1" class="w"><label for="q46o1">5</label>
+    <input type="radio" name="q46" id="q46o2" class="w"><label for="q46o2">4</label>
+    <input type="radio" name="q46" id="q46o3" class="w"><label for="q46o3">3</label>
+    <input type="radio" name="q46" id="q46o4" class="r"><label for="q46o4">2</label>
+    <div class="msg good">&#128276; Alarm bells everywhere &#8212; CLANG! Trapped!</div>
+    <div class="msg bad">&#128520; Get the crowbar, Lanky! The answer was <b>2</b>.</div>
+  </div>
+</div>
+<div class="card p1">
+  <div class="who">Player 1 &#183; question 47</div>
+  <div class="prob">71 + 9 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q47" id="q47o1" class="r"><label for="q47o1">80</label>
+    <input type="radio" name="q47" id="q47o2" class="w"><label for="q47o2">77</label>
+    <input type="radio" name="q47" id="q47o3" class="w"><label for="q47o3">79</label>
+    <input type="radio" name="q47" id="q47o4" class="w"><label for="q47o4">82</label>
+    <div class="msg good">&#129482; Icy front steps &#8212; WHOOPS! Trapped!</div>
+    <div class="msg bad">&#128520; Too easy, kid! The answer was <b>80</b>.</div>
+  </div>
+</div>
+<div class="card p2">
+  <div class="who">Player 2 &#183; question 48</div>
+  <div class="prob">32 &#247; 4 = ?</div>
+  <div class="choices">
+    <input type="radio" name="q48" id="q48o1" class="w"><label for="q48o1">7</label>
+    <input type="radio" name="q48" id="q48o2" class="r"><label for="q48o2">8</label>
+    <input type="radio" name="q48" id="q48o3" class="w"><label for="q48o3">11</label>
+    <input type="radio" name="q48" id="q48o4" class="w"><label for="q48o4">5</label>
+    <div class="msg good">&#129506; Slippery socks on the stairs &#8212; WHEE! Trapped!</div>
+    <div class="msg bad">&#128520; One step closer to the door... The answer was <b>8</b>.</div>
+  </div>
+</div>
+<div class="finish">
+&#127942; <b>House report</b><br>
+Player 1 trapped <b class="c1h"></b> bandits and let <b class="c1m"></b> slip past.<br>
+Player 2 trapped <b class="c2h"></b> bandits and let <b class="c2m"></b> slip past.<br>
+<span style="opacity:.75">Every trap counts. Reload the page to defend the house again!</span>
+</div>
+<p class="hint">Tip: pull down to refresh, or close and reopen, to clear all the answers.</p>
+<div id="board">
+  <div class="one"><span class="nm">Player 1</span><span class="tally">&#9989; <span class="c1h"></span> &#160; &#10060; <span class="c1m"></span></span></div>
+  <div class="two"><span class="nm">Player 2</span><span class="tally">&#9989; <span class="c2h"></span> &#160; &#10060; <span class="c2m"></span></span></div>
+</div>
+</body>
+</html>
