@@ -12,7 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="Math Alone">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-180.png">
-<link rel="stylesheet" href="style.css">
+<!-- ?v= is bumped whenever style.css or game.js change, so browsers
+     (and iPad home-screen apps) never run a stale mix of old and new -->
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <div id="jserr"></div>
@@ -270,6 +272,6 @@
 </section>
 
 <div class="toast" id="toast"></div>
-<script src="game.js"></script>
+<script src="game.js?v=2"></script>
 </body>
 </html>
